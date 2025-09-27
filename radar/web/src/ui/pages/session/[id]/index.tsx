@@ -9,6 +9,7 @@ import { updateRadarSettings } from "../../../../state/radar-settings";
 import { SubscriberClientProvider, useSubscriberClient } from "../../../components/connection";
 import ModalSettings from "./modal-settings";
 import { ContextRadarState, RadarRenderer } from "./radar";
+import { useDocumentFocusState } from "../../../components/container/document-focus-state";
 
 const kServerUrl: string | null = process.env.SERVER_URL;
 const getEndpointUrl = () => {
@@ -37,7 +38,6 @@ const getEndpointUrl = () => {
 }
 
 export default React.memo(() => {
-    const dispatch = useAppDispatch();
     const targetUrl = React.useMemo(getEndpointUrl, []);
 
     return (
@@ -59,12 +59,20 @@ export default React.memo(() => {
                 <ClientStateDisconnected />
             </SubscriberClientProvider>
             <ModalSettings />
-            <Box sx={{ position: "absolute", top: 0, right: 0 }}>
-                <IconButton onClick={() => dispatch(updateRadarSettings({ dialogOpen: true }))} sx={{ mr: 2, mt: 2 }}>
-                    <IconSettings />
-                </IconButton>
+            <Box sx={{ position: "absolute", top: 0, right: 0, pt: 2, pr: 2 }}>
+                <ButtonToggleSettings />
             </Box>
         </Box>
+    );
+});
+
+const ButtonToggleSettings = React.memo(() => {
+    const dispatch = useAppDispatch();
+    const hasFocus = useDocumentFocusState();
+    return (
+        <IconButton onClick={() => dispatch(updateRadarSettings({ dialogOpen: true }))} sx={{ zIndex: 1, opacity: hasFocus ? 1 : 0, transition: ".1s ease-in-out" }}>
+            <IconSettings />
+        </IconButton>
     );
 });
 
