@@ -8,8 +8,9 @@ export type RadarSettingsState = {
     iconSize: number,
     displayBombDetails: boolean,
     showAllLayers: boolean,
-    mapStyle: string,
 
+    mapStyle: string,
+    mapScale: number,
     mapMarginLeft: number,
     mapMarginRight: number,
     mapMarginTop: number,
@@ -31,6 +32,8 @@ export const kDefaultRadarSettings: RadarSettingsState = {
     showAllLayers: true,
 
     mapStyle: "Official",
+    mapScale: 1,
+
     mapMarginTop: 0,
     mapMarginLeft: 0,
     mapMarginRight: 0,

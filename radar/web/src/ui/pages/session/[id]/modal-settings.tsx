@@ -65,6 +65,7 @@ export default React.memo(() => {
 
                 <TabPanel index={2} value={currentTab}>
                     <SettingStyleSelector />
+                    <SettingSlider target={"mapScale"} title={"Scale"} min={.1} max={4} step={.1} />
 
                     <SettingSlider target={"mapMarginLeft"} title={"Margin Left (%)"} min={-100} max={100} step={1} />
                     <SettingSlider target={"mapMarginRight"} title={"Margin Right (%)"} min={-100} max={100} step={1} />

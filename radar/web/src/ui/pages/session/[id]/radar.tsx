@@ -143,8 +143,10 @@ const MapContainer = React.memo(() => {
     }
 
     const localPlayerPosition = playerPawns.find(pawn => pawn.controllerEntityId === localControllerEntityId)?.position ?? [0, 0, 0];
+    const localMapPosition = useMapPosition(localPlayerPosition) ?? [0, 0];
     const localMapLevel = getMapLevel(map, localPlayerPosition);
 
+    const mapScale = useAppSelector(state => state.radarSettings.mapScale);
     const [marginLeft, marginRight, marginTop, marginBottom] = useAppSelector(state => [
         state.radarSettings.mapMarginLeft,
         state.radarSettings.mapMarginRight,
@@ -188,7 +190,14 @@ const MapContainer = React.memo(() => {
                 } else {
                     const minAxis = Math.min(size.width, size.height);
                     return (
-                        <SquareContainer squareSize={minAxis} sx={{ alignSelf: "center" }} >
+                        <SquareContainer
+                            squareSize={minAxis}
+                            sx={{
+                                alignSelf: "center",
+                                transformOrigin: `${localMapPosition[0] * minAxis / 100}px ${localMapPosition[1] * minAxis / 100}px`,
+                                transform: `scale(${mapScale})`,
+                            }}
+                        >
                             <MapLevel level={localMapLevel} />
                         </SquareContainer>
                     );
