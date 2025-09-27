@@ -16,6 +16,26 @@ import { useQuery } from "react-query";
 export const ContextRadarState = React.createContext<RadarState>(kDefaultRadarState);
 const ContextMap = React.createContext<LoadedMap>(null);
 
+const MapTitle = React.memo(() => {
+    const { worldName } = React.useContext(ContextRadarState);
+    const queryMap = useQuery({
+        queryKey: ["map-info", worldName],
+        queryFn: async () => {
+            return await loadMap(worldName);
+        },
+        enabled: !worldName.includes("empty")
+    });
+
+    const hideMapTitle = useAppSelector(state => state.radarSettings.hideMapTitle);
+    if (hideMapTitle) {
+        return null;
+    }
+
+    return (
+        <Typography variant={"h5"}>{queryMap.data?.displayName ?? worldName}</Typography>
+    );
+});
+
 export const RadarRenderer = React.memo(() => {
     const { worldName, plantedC4 } = React.useContext(ContextRadarState);
     const isInMatch = !worldName.includes("empty");
@@ -44,7 +64,7 @@ export const RadarRenderer = React.memo(() => {
                     p: padding,
                 }}
             >
-                <Typography variant={"h5"}>{queryMap.data?.displayName ?? worldName}</Typography>
+                <MapTitle />
                 <Box
                     sx={{
                         height: "100%",

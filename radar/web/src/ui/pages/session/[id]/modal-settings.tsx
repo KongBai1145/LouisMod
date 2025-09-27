@@ -44,6 +44,7 @@ export default React.memo(() => {
                 <SettingBoolean target="showAllLayers" title="Display all levels" />
                 <SettingBoolean target="showDotOwn" title="Highlight broadacster" />
                 <SettingBoolean target="disablePadding" title="Disable page padding" />
+                <SettingBoolean target="hideMapTitle" title="Hide map title" />
 
                 <SettingDotColor target="colorDotCT" title="CT Color" />
                 <SettingDotColor target="colorDotT" title="T Color" />
@@ -75,9 +76,13 @@ const SettingIconSize = React.memo(() => {
     );
 });
 
+type KeysMatching<T extends object, V> = {
+    [K in keyof T]-?: T[K] extends V ? K : never
+}[keyof T];
+
 const SettingBoolean = React.memo((props: {
     title: string,
-    target: keyof RadarSettingsState & ("displayBombDetails" | "showDotOwn" | "showAllLayers" | "disablePadding")
+    target: KeysMatching<RadarSettingsState, boolean>
 }) => {
     const { target, title } = props;
     const value = useAppSelector(state => state.radarSettings[target]);
