@@ -145,11 +145,23 @@ const MapContainer = React.memo(() => {
     const localPlayerPosition = playerPawns.find(pawn => pawn.controllerEntityId === localControllerEntityId)?.position ?? [0, 0, 0];
     const localMapLevel = getMapLevel(map, localPlayerPosition);
 
+    const [marginLeft, marginRight, marginTop, marginBottom] = useAppSelector(state => [
+        state.radarSettings.mapMarginLeft,
+        state.radarSettings.mapMarginRight,
+        state.radarSettings.mapMarginTop,
+        state.radarSettings.mapMarginBottom,
+    ]);
+
     return (
         <SizedContainer sx={{
             display: "flex",
             flexDirection: "column",
-            justifyContent: "center"
+            justifyContent: "center",
+
+            left: `${marginLeft}%`,
+            right: `${marginRight}%`,
+            top: `${marginTop}%`,
+            bottom: `${marginBottom}%`,
         }}>
             {size => {
                 if (showAllLayers && map.verticalSections.length > 1) {

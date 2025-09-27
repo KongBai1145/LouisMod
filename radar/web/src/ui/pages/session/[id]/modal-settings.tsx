@@ -44,7 +44,8 @@ export default React.memo(() => {
                 <Box sx={{ borderBottom: 1, borderColor: 'divider', width: "100%" }}>
                     <Tabs value={currentTab} onChange={(_event, value) => setCurrentTab(value)}>
                         <Tab label="Page Settings" />
-                        <Tab label="Radar Visuals" />
+                        <Tab label="Visuals" />
+                        <Tab label="Map Style" />
                         <Tab label="Colors" />
                     </Tabs>
                 </Box>
@@ -55,8 +56,7 @@ export default React.memo(() => {
                 </TabPanel>
 
                 <TabPanel index={1} value={currentTab}>
-                    <SettingStyleSelector />
-                    <SettingIconSize />
+                    <SettingSlider target={"iconSize"} title={"Icon Size"} min={0.1} max={5.0} step={0.1} />
 
                     <SettingBoolean target="displayBombDetails" title="Display Bomb Details" />
                     <SettingBoolean target="showAllLayers" title="Display all levels" />
@@ -64,6 +64,15 @@ export default React.memo(() => {
                 </TabPanel>
 
                 <TabPanel index={2} value={currentTab}>
+                    <SettingStyleSelector />
+
+                    <SettingSlider target={"mapMarginLeft"} title={"Margin Left (%)"} min={-100} max={100} step={1} />
+                    <SettingSlider target={"mapMarginRight"} title={"Margin Right (%)"} min={-100} max={100} step={1} />
+                    <SettingSlider target={"mapMarginTop"} title={"Margin Top (%)"} min={-100} max={100} step={1} />
+                    <SettingSlider target={"mapMarginBottom"} title={"Margin Bottom (%)"} min={-100} max={100} step={1} />
+                </TabPanel>
+
+                <TabPanel index={3} value={currentTab}>
                     <SettingDotColor target="colorDotCT" title="CT Color" />
                     <SettingDotColor target="colorDotT" title="T Color" />
                     {highlightBroadcaster && <SettingDotColor target="colorDotOwn" title="Own Color" />}
@@ -91,19 +100,26 @@ const TabPanel = (props: {
     );
 }
 
-const SettingIconSize = React.memo(() => {
-    const value = useAppSelector((state) => state.radarSettings.iconSize);
+const SettingSlider = React.memo((props: {
+    title: string,
+    target: KeysMatching<RadarSettingsState, number>,
+
+    min: number,
+    max: number,
+    step: number
+}) => {
+    const value = useAppSelector((state) => state.radarSettings[props.target]);
     const dispatch = useAppDispatch();
 
     return (
         <Box>
-            <Typography variant={"subtitle1"}>Icon Size</Typography>
+            <Typography variant={"subtitle1"}>{props.title}</Typography>
             <Slider
-                min={0.1}
-                max={5.0}
-                step={0.1}
+                min={props.min}
+                max={props.max}
+                step={props.step}
                 value={value}
-                onChange={(_event, value) => dispatch(updateRadarSettings({ iconSize: value }))}
+                onChange={(_event, value) => dispatch(updateRadarSettings({ [props.target]: value }))}
                 valueLabelDisplay={"auto"}
             />
         </Box>

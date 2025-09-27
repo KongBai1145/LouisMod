@@ -10,6 +10,11 @@ export type RadarSettingsState = {
     showAllLayers: boolean,
     mapStyle: string,
 
+    mapMarginLeft: number,
+    mapMarginRight: number,
+    mapMarginTop: number,
+    mapMarginBottom: number,
+
     colorDotCT: string;
     colorDotT: string;
     colorDotOwn: string;
@@ -24,7 +29,12 @@ export const kDefaultRadarSettings: RadarSettingsState = {
     iconSize: 3.0,
     displayBombDetails: true,
     showAllLayers: true,
+
     mapStyle: "Official",
+    mapMarginTop: 0,
+    mapMarginLeft: 0,
+    mapMarginRight: 0,
+    mapMarginBottom: 0,
 
     colorDotCT: "#0007ff",
     colorDotT: "#ffc933",
