@@ -8,7 +8,6 @@ members = [
     "cs2-schema/generated",
     "cs2-schema/dumper",
     "cs2-schema/provider",
-    "cs2-schema/provider-impl",
 
     "radar/client",
     "radar/client-standalone",

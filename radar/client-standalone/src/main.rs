@@ -1,17 +1,21 @@
 use std::{
     path::PathBuf,
+    str::FromStr,
     time::Duration,
 };
 
 use anyhow::Context;
 use clap::Parser;
 use cs2::{
+    schema_runtime::{
+        self,
+        SetupOptions,
+    },
     CS2Handle,
     InterfaceError,
     StateCS2Handle,
     StateCS2Memory,
 };
-use obfstr::obfstr;
 use radar_client::{
     CS2RadarGenerator,
     DummyRadarGenerator,
@@ -87,30 +91,17 @@ async fn real_main(args: &Args) -> anyhow::Result<()> {
                 return Err(err);
             }
         };
-        let mut states = StateRegistry::new(1024 * 8);
+        let states = StateRegistry::new(1024 * 8);
         states.set(StateCS2Memory::new(cs2.create_memory_view()), ())?;
         states.set(StateCS2Handle::new(cs2), ())?;
 
-        if let Some(file) = &args.schema_file {
-            log::info!(
-                "{} {}",
-                obfstr!("Loading CS2 schema (offsets) from file"),
-                file.display()
-            );
-
-            cs2_schema_provider_impl::setup_schema_from_file(&mut states, file)
-                .context("file schema setup")?;
-        } else {
-            log::info!(
-                "{}",
-                obfstr!("Loading CS2 schema (offsets) from CS2 schema system")
-            );
-            cs2_schema_provider_impl::setup_provider(Box::new(
-                cs2_schema_provider_impl::RuntimeSchemaProvider::new(&states)
-                    .context("load runtime schema")?,
-            ));
-        }
-        log::info!("CS2 schema (offsets) loaded.");
+        schema_runtime::setup(
+            &states,
+            &SetupOptions {
+                file: args.schema_file.clone(),
+                fscache: Some(PathBuf::from_str("schema_cache").unwrap()),
+            },
+        )?;
 
         Box::new(CS2RadarGenerator::new(states)?)
     };
