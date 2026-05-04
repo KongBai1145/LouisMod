@@ -381,7 +381,7 @@ pub fn find_syscall_ret_gadget() -> IResult<u64> {
 
                 let text_start = base.add(virtual_address as usize);
                 let text_size = virtual_size as usize;
-                let text_bytes = std::slice::from_raw_parts(text_start, text_size.min(0x100000));
+                let text_bytes = std::slice::from_raw_parts(text_start, text_size);
 
                 // Scan for 0x0F 0x05 0xC3 (syscall; ret)
                 let needle: [u8; 3] = [0x0F, 0x05, 0xC3];
@@ -393,6 +393,7 @@ pub fn find_syscall_ret_gadget() -> IResult<u64> {
                         return Ok(text_start.add(j) as u64);
                     }
                 }
+                log::debug!("  gadget scan: .text VA=0x{:X} size={} — 0F 05 C3 not found", virtual_address, text_size);
                 break;
             }
         }
