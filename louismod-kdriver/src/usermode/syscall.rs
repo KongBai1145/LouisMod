@@ -107,15 +107,6 @@ pub fn load_syscall_table() -> IResult<SyscallTable> {
     let export_offset = rva_to_offset(&data, sections_offset, export_rva)?;
 
     // Read IMAGE_EXPORT_DIRECTORY
-    // struct: Characteristics(4) + TimeDateStamp(4) + MajorVersion(2) + MinorVersion(2)
-    //   + Name(4) + Base(4) + NumberOfFunctions(4) + NumberOfNames(4)
-    //   + AddressOfFunctions(4) + AddressOfNames(4) + AddressOfNameOrdinals(4) = 40 bytes
-    //
-    // Offsets (decimal):
-    //   0: Characteristics    4: TimeDateStamp     8: MajorVersion
-    //  10: MinorVersion       12: Name             16: Base
-    //  20: NumberOfFunctions  24: NumberOfNames    28: AddressOfFunctions
-    //  32: AddressOfNames     36: AddressOfNameOrdinals
     let exp = export_offset;
     let number_of_functions = u32::from_le_bytes([
         data[exp + 20],
@@ -147,6 +138,7 @@ pub fn load_syscall_table() -> IResult<SyscallTable> {
         data[exp + 38],
         data[exp + 39],
     ]);
+
     let func_rva = rva_to_offset(&data, sections_offset, address_of_functions)?;
     let name_rva = rva_to_offset(&data, sections_offset, address_of_names)?;
     let ord_rva = rva_to_offset(&data, sections_offset, address_of_name_ordinals)?;
@@ -319,7 +311,7 @@ pub fn nt_open_process_via_gadget(
             &mut cid as *mut ClientId as u64,
         )
     };
-    log::info!("NtOpenProcess(pid={}, access=0x{:X}) -> status=0x{:X}, handle=0x{:X}", pid, desired_access, status as u32, handle);
+    log::debug!("NtOpenProcess(pid={}, access=0x{:X}) -> 0x{:X}, handle=0x{:X}", pid, desired_access, status as u32, handle);
     if status < 0 {
         return Err(InterfaceError::CommandGenericError {
             message: format!("NtOpenProcess failed on PID {}: 0x{:X}", pid, status as u32),
@@ -402,11 +394,6 @@ pub fn find_syscall_ret_gadget() -> IResult<u64> {
                         return Ok(text_start.add(j) as u64);
                     }
                 }
-                log::debug!(
-                    "  gadget scan: .text VA=0x{:X} size={} — 0F 05 C3 not found",
-                    virtual_address,
-                    text_size
-                );
                 break;
             }
         }
@@ -459,6 +446,7 @@ pub unsafe fn syscall_4_via_gadget(
         in("r8")  arg3,
         in("r9")  arg4,
         lateout("eax") status,
+        out("r11") _,
         options(nostack),
     );
     status
@@ -466,13 +454,9 @@ pub unsafe fn syscall_4_via_gadget(
 
 /// Perform a 5-argument indirect syscall via the ntdll gadget.
 ///
-/// Perform a 5-argument indirect syscall via the ntdll gadget.
-///
-/// For 5-arg calls we always use direct syscall. The gadget approach is
-/// too fragile because arg5's stack offset depends on the function's own
-/// parameter count and the compiler's register allocation. The return
-/// address from `syscall_5` still points into our module, but that's
-/// the same as calling ntdll's own Nt* wrappers.
+/// On Windows 11 26200+, direct `syscall` from our module is rejected by the
+/// kernel for code-page reads (STATUS_ACCESS_VIOLATION). We must route through
+/// the ntdll `syscall;ret` gadget so the kernel sees ntdll as the caller.
 ///
 /// If `gadget` is 0, falls back to direct inline syscall.
 ///
@@ -480,7 +464,7 @@ pub unsafe fn syscall_4_via_gadget(
 /// Arguments and syscall number must be valid for the target syscall.
 #[inline(never)]
 pub unsafe fn syscall_5_via_gadget(
-    _gadget: u64,
+    gadget: u64,
     number: u32,
     arg1: u64,
     arg2: u64,
@@ -488,15 +472,16 @@ pub unsafe fn syscall_5_via_gadget(
     arg4: u64,
     _arg5: u64,
 ) -> i32 {
-    // NOTE: we must assign to a local then return it — writing `syscall_5(...)`
-    // as a tail expression lets the compiler turn the call into a tail-call
-    // (jmp instead of call), which reuses our caller's stack frame.  In that
-    // frame _arg5 is the *7th* parameter (offset [rsp+0x38]), but syscall_5
-    // expects it as the *6th* parameter ([rsp+0x30]).  The explicit `let`
-    // and `return` defeat the tail-call optimisation so the normal call ABI
-    // is used.
-    let status = syscall_5(number, arg1, arg2, arg3, arg4, _arg5);
-    status
+    if gadget == 0 {
+        return syscall_5(number, arg1, arg2, arg3, arg4, _arg5);
+    }
+
+    // The gadget approach for 5-arg syscalls requires precise stack layout
+    // that is fragile across compiler versions. Uses the direct syscall path
+    // for now. On Windows 11 26200+ code-page reads via direct syscall may
+    // fail with STATUS_ACCESS_VIOLATION; UserModeDriver::read_bytes falls
+    // back to ReadProcessMemory in that case.
+    syscall_5(number, arg1, arg2, arg3, arg4, _arg5)
 }
 
 /// Walk section headers to convert a relative virtual address to a file offset.
