@@ -580,7 +580,10 @@ pub unsafe fn syscall_4(number: u32, arg1: u64, arg2: u64, arg3: u64, arg4: u64)
 
 /// Perform a 5-argument indirect syscall.
 ///
-/// The 5th argument must already be on the stack per the x64 calling convention.
+/// Because the function has 6 params (number + arg1..4 + _arg5) and we bind
+/// the first 5 to explicit registers, the compiler puts arg4 at [rsp+0x28]
+/// and _arg5 at [rsp+0x30]. The `syscall` instruction expects arg5 at
+/// [rsp+0x28], so we must copy _arg5 from [rsp+0x30] down one slot.
 ///
 /// # Safety
 /// Arguments and syscall number must be valid for the target syscall.
@@ -596,13 +599,14 @@ pub unsafe fn syscall_5(
     let status: i32;
     core::arch::asm!(
         "mov r10, rcx",
+        "mov rax, QWORD PTR [rsp + 0x30]",
+        "mov QWORD PTR [rsp + 0x28], rax",
         "syscall",
         in("eax") number,
         in("rcx") arg1,
         in("rdx") arg2,
         in("r8")  arg3,
         in("r9")  arg4,
-        // arg5 is on the stack at [rsp+0x28] — already placed there by caller
         lateout("eax") status,
         out("r11") _,
         options(nostack),
