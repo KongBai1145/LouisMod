@@ -110,36 +110,42 @@ pub fn load_syscall_table() -> IResult<SyscallTable> {
     // struct: Characteristics(4) + TimeDateStamp(4) + MajorVersion(2) + MinorVersion(2)
     //   + Name(4) + Base(4) + NumberOfFunctions(4) + NumberOfNames(4)
     //   + AddressOfFunctions(4) + AddressOfNames(4) + AddressOfNameOrdinals(4) = 40 bytes
+    //
+    // Offsets (decimal):
+    //   0: Characteristics    4: TimeDateStamp     8: MajorVersion
+    //  10: MinorVersion       12: Name             16: Base
+    //  20: NumberOfFunctions  24: NumberOfNames    28: AddressOfFunctions
+    //  32: AddressOfNames     36: AddressOfNameOrdinals
     let exp = export_offset;
     let number_of_functions = u32::from_le_bytes([
-        data[exp + 16],
-        data[exp + 17],
-        data[exp + 18],
-        data[exp + 19],
-    ]);
-    let number_of_names = u32::from_le_bytes([
         data[exp + 20],
         data[exp + 21],
         data[exp + 22],
         data[exp + 23],
     ]);
-    let address_of_functions = u32::from_le_bytes([
+    let number_of_names = u32::from_le_bytes([
         data[exp + 24],
         data[exp + 25],
         data[exp + 26],
         data[exp + 27],
     ]);
-    let address_of_names = u32::from_le_bytes([
+    let address_of_functions = u32::from_le_bytes([
         data[exp + 28],
         data[exp + 29],
         data[exp + 30],
         data[exp + 31],
     ]);
-    let address_of_name_ordinals = u32::from_le_bytes([
+    let address_of_names = u32::from_le_bytes([
         data[exp + 32],
         data[exp + 33],
         data[exp + 34],
         data[exp + 35],
+    ]);
+    let address_of_name_ordinals = u32::from_le_bytes([
+        data[exp + 36],
+        data[exp + 37],
+        data[exp + 38],
+        data[exp + 39],
     ]);
 
     let func_rva = rva_to_offset(&data, sections_offset, address_of_functions)?;
