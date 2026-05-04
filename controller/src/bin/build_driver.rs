@@ -15,18 +15,48 @@ fn main() {
     std::fs::create_dir_all(&bin_dir).ok();
 
     // Set environment variables
-    std::env::set_var("PATH", format!(r"{}\bin\Hostx64\x64;{}", msvc_root, std::env::var("PATH").unwrap_or_default()));
-    std::env::set_var("INCLUDE", format!(
-        r"{}\include;{}\\atlmfc\\include;{}\\Include\\{}\km;{}\\Include\\{}\shared;{}\\Include\\{}\um;{}\\Include\\{}\ucrt",
-        msvc_root, msvc_root, wdk_dir, sdk_ver, wdk_dir, sdk_ver, wdk_dir, sdk_ver, wdk_dir, sdk_ver
-    ));
-    std::env::set_var("LIB", format!(
-        r"{}\lib\x64;{}\\atlmfc\\lib\x64;{}\\Lib\\{}\km\x64;{}\\Lib\\{}\um\x64",
-        msvc_root, msvc_root, wdk_dir, sdk_ver, wdk_dir, sdk_ver
-    ));
+    std::env::set_var(
+        "PATH",
+        format!(
+            r"{}\bin\Hostx64\x64;{}",
+            msvc_root,
+            std::env::var("PATH").unwrap_or_default()
+        ),
+    );
+    std::env::set_var(
+        "INCLUDE",
+        format!(
+            r"{}\include;{}\\atlmfc\\include;{}\\Include\\{}\km;{}\\Include\\{}\shared;{}\\Include\\{}\um;{}\\Include\\{}\ucrt",
+            msvc_root,
+            msvc_root,
+            wdk_dir,
+            sdk_ver,
+            wdk_dir,
+            sdk_ver,
+            wdk_dir,
+            sdk_ver,
+            wdk_dir,
+            sdk_ver
+        ),
+    );
+    std::env::set_var(
+        "LIB",
+        format!(
+            r"{}\lib\x64;{}\\atlmfc\\lib\x64;{}\\Lib\\{}\km\x64;{}\\Lib\\{}\um\x64",
+            msvc_root, msvc_root, wdk_dir, sdk_ver, wdk_dir, sdk_ver
+        ),
+    );
 
     // Source files
-    let sources = &["driver.c", "init.c", "ioctl.c", "memory.c", "process.c", "input.c", "hiding.c"];
+    let sources = &[
+        "driver.c",
+        "init.c",
+        "ioctl.c",
+        "memory.c",
+        "process.c",
+        "input.c",
+        "hiding.c",
+    ];
     let mut objs = Vec::new();
 
     let cflags = format!(
@@ -37,7 +67,9 @@ fn main() {
          /I\"{wdk}\\Include\\{sdk}\\um\" \
          /I\"{wdk}\\Include\\{sdk}\\ucrt\" \
          /DKERNEL_MODE /D_WIN32_WINNT=0x0A00 /DWINVER=0x0A00",
-         src = src_dir, wdk = wdk_dir, sdk = sdk_ver
+        src = src_dir,
+        wdk = wdk_dir,
+        sdk = sdk_ver
     );
 
     for src in sources {
@@ -67,7 +99,8 @@ fn main() {
          /LIBPATH:\"{wdk}\\Lib\\{sdk}\\km\\x64\" \
          /LIBPATH:\"{wdk}\\Lib\\{sdk}\\um\\x64\" \
          ntoskrnl.lib hal.lib",
-         wdk = wdk_dir, sdk = sdk_ver
+        wdk = wdk_dir,
+        sdk = sdk_ver
     );
 
     println!("[LINK] louismod.sys");

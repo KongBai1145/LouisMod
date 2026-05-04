@@ -639,10 +639,8 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
 
     // Start web control panel server
     {
-        let web_server = web::WebServer::new_with_state(
-            shared_settings.clone(),
-            web_settings_changed.clone(),
-        );
+        let web_server =
+            web::WebServer::new_with_state(shared_settings.clone(), web_settings_changed.clone());
         let web_port = 16384;
         tokio::spawn(async move {
             if let Err(err) = web_server.start(web_port).await {

@@ -40,7 +40,6 @@ pub mod sniper_crosshair;
 
 mod silent_aim;
 pub use silent_aim::*;
-
 use utils_state::StateRegistry;
 
 use crate::UpdateContext;

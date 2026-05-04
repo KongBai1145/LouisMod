@@ -1,5 +1,6 @@
-use bitflags::bitflags;
 use std::fmt;
+
+use bitflags::bitflags;
 
 pub type ProcessId = u32;
 

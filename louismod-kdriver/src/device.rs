@@ -1,15 +1,32 @@
-use std::ffi::OsStr;
-use std::os::windows::ffi::OsStrExt;
-use std::ptr;
-use windows::Win32::Foundation::{CloseHandle, HANDLE, INVALID_HANDLE_VALUE};
-use windows::Win32::Storage::FileSystem::{
-    CreateFileW, FILE_FLAGS_AND_ATTRIBUTES, FILE_SHARE_READ, FILE_SHARE_WRITE,
-    OPEN_EXISTING,
+use std::{
+    ffi::OsStr,
+    os::windows::ffi::OsStrExt,
+    ptr,
 };
-use windows::Win32::System::IO::DeviceIoControl;
 
-use crate::command;
-use crate::error::{IResult, InterfaceError};
+use windows::Win32::{
+    Foundation::{
+        CloseHandle,
+        HANDLE,
+        INVALID_HANDLE_VALUE,
+    },
+    Storage::FileSystem::{
+        CreateFileW,
+        FILE_FLAGS_AND_ATTRIBUTES,
+        FILE_SHARE_READ,
+        FILE_SHARE_WRITE,
+        OPEN_EXISTING,
+    },
+    System::IO::DeviceIoControl,
+};
+
+use crate::{
+    command,
+    error::{
+        IResult,
+        InterfaceError,
+    },
+};
 
 /// Fallback device path (used when registry lookup fails)
 const FIXED_DEVICE_PATH: &str = "\\\\.\\Global\\LouisModCore";
@@ -35,7 +52,11 @@ impl DeviceHandle {
     /// The kernel driver stores its random device name under HKLM\SOFTWARE\LouisMod.
     fn discover_device_path() -> String {
         use windows::Win32::System::Registry::{
-            RegOpenKeyExW, RegQueryValueExW, HKEY_LOCAL_MACHINE, KEY_READ, REG_VALUE_TYPE,
+            RegOpenKeyExW,
+            RegQueryValueExW,
+            HKEY_LOCAL_MACHINE,
+            KEY_READ,
+            REG_VALUE_TYPE,
         };
 
         let key_path: Vec<u16> = OsStr::new(REGISTRY_KEY)
@@ -197,9 +218,7 @@ impl DeviceHandle {
                 None,
             )
         }
-        .map_err(|_| {
-            InterfaceError::CommunicationFailed("DeviceIoControl failed".to_string())
-        })?;
+        .map_err(|_| InterfaceError::CommunicationFailed("DeviceIoControl failed".to_string()))?;
 
         output.truncate(bytes_returned as usize);
 

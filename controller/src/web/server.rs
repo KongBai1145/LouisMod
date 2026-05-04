@@ -11,7 +11,10 @@ use axum::{
         },
         State,
     },
-    response::{Html, Response},
+    response::{
+        Html,
+        Response,
+    },
     routing::get,
     Router,
 };
@@ -87,10 +90,7 @@ impl WebServer {
     }
 }
 
-async fn ws_handler(
-    ws: WebSocketUpgrade,
-    State(state): State<WebAppState>,
-) -> Response {
+async fn ws_handler(ws: WebSocketUpgrade, State(state): State<WebAppState>) -> Response {
     ws.on_upgrade(move |socket| handle_web_socket(socket, state))
 }
 

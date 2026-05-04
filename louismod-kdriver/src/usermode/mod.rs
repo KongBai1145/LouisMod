@@ -1,22 +1,51 @@
 mod syscall;
 
-use std::ffi::OsString;
-use std::os::windows::ffi::OsStringExt;
-use std::sync::atomic::{AtomicUsize, Ordering};
-
-use windows::Win32::System::Threading::{
-    PROCESS_QUERY_INFORMATION, PROCESS_VM_READ, PROCESS_VM_WRITE,
-};
-use windows::Win32::UI::Input::KeyboardAndMouse::{
-    SendInput, INPUT, INPUT_KEYBOARD, INPUT_MOUSE, KEYBDINPUT, KEYEVENTF_KEYUP,
-    KEYEVENTF_SCANCODE, MOUSEINPUT, MOUSEEVENTF_MOVE, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP,
-    MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_MIDDLEUP,
-    MOUSEEVENTF_WHEEL, MOUSEEVENTF_HWHEEL, MOUSE_EVENT_FLAGS, VIRTUAL_KEY,
+use std::{
+    ffi::OsString,
+    os::windows::ffi::OsStringExt,
+    sync::atomic::{
+        AtomicUsize,
+        Ordering,
+    },
 };
 
-use crate::error::{IResult, InterfaceError};
-use crate::trait_interface::DriverInterface;
-use crate::types::*;
+use windows::Win32::{
+    System::Threading::{
+        PROCESS_QUERY_INFORMATION,
+        PROCESS_VM_READ,
+        PROCESS_VM_WRITE,
+    },
+    UI::Input::KeyboardAndMouse::{
+        SendInput,
+        INPUT,
+        INPUT_KEYBOARD,
+        INPUT_MOUSE,
+        KEYBDINPUT,
+        KEYEVENTF_KEYUP,
+        KEYEVENTF_SCANCODE,
+        MOUSEEVENTF_HWHEEL,
+        MOUSEEVENTF_LEFTDOWN,
+        MOUSEEVENTF_LEFTUP,
+        MOUSEEVENTF_MIDDLEDOWN,
+        MOUSEEVENTF_MIDDLEUP,
+        MOUSEEVENTF_MOVE,
+        MOUSEEVENTF_RIGHTDOWN,
+        MOUSEEVENTF_RIGHTUP,
+        MOUSEEVENTF_WHEEL,
+        MOUSEINPUT,
+        MOUSE_EVENT_FLAGS,
+        VIRTUAL_KEY,
+    },
+};
+
+use crate::{
+    error::{
+        IResult,
+        InterfaceError,
+    },
+    trait_interface::DriverInterface,
+    types::*,
+};
 
 // ---------------------------------------------------------------
 // UserModeDriver
@@ -46,8 +75,12 @@ impl UserModeDriver {
 
         // Open a handle via indirect NtOpenProcess — bypasses kernel32/ntdll hooks
         let desired_access = PROCESS_VM_READ.0 | PROCESS_VM_WRITE.0 | PROCESS_QUERY_INFORMATION.0;
-        let handle_val =
-            syscall::nt_open_process_via_gadget(gadget, syscalls.nt_open_process, pid, desired_access)?;
+        let handle_val = syscall::nt_open_process_via_gadget(
+            gadget,
+            syscalls.nt_open_process,
+            pid,
+            desired_access,
+        )?;
 
         // Enumerate modules via PEB walk using indirect syscalls
         let modules = enumerate_modules_via_peb(&syscalls, gadget, handle_val)?;
@@ -113,11 +146,21 @@ impl DriverInterface for UserModeDriver {
         list_processes_internal(self.gadget, self.syscalls.nt_query_system_information)
     }
 
-    fn list_modules(&self, _pid: ProcessId, _dt: DirectoryTableType) -> IResult<Vec<ProcessModuleInfo>> {
+    fn list_modules(
+        &self,
+        _pid: ProcessId,
+        _dt: DirectoryTableType,
+    ) -> IResult<Vec<ProcessModuleInfo>> {
         Ok(self.modules.clone())
     }
 
-    fn read_bytes(&self, _pid: ProcessId, _dt: DirectoryTableType, addr: u64, buf: &mut [u8]) -> IResult<()> {
+    fn read_bytes(
+        &self,
+        _pid: ProcessId,
+        _dt: DirectoryTableType,
+        addr: u64,
+        buf: &mut [u8],
+    ) -> IResult<()> {
         let mut bytes_read: u64 = 0;
         let status = unsafe {
             syscall::syscall_5_via_gadget(
@@ -137,7 +180,13 @@ impl DriverInterface for UserModeDriver {
         Ok(())
     }
 
-    fn write_bytes(&self, _pid: ProcessId, _dt: DirectoryTableType, addr: u64, buf: &[u8]) -> IResult<()> {
+    fn write_bytes(
+        &self,
+        _pid: ProcessId,
+        _dt: DirectoryTableType,
+        addr: u64,
+        buf: &[u8],
+    ) -> IResult<()> {
         let mut bytes_written: u64 = 0;
         let status = unsafe {
             syscall::syscall_5_via_gadget(
@@ -280,26 +329,40 @@ fn parse_process_info(data: &[u8]) -> Vec<(u32, String)> {
 
     while offset + 0x58 <= data.len() {
         let next_entry = u32::from_le_bytes([
-            data[offset], data[offset + 1], data[offset + 2], data[offset + 3],
+            data[offset],
+            data[offset + 1],
+            data[offset + 2],
+            data[offset + 3],
         ]) as usize;
 
         let pid = u64::from_le_bytes([
-            data[offset + 0x50], data[offset + 0x51], data[offset + 0x52], data[offset + 0x53],
-            data[offset + 0x54], data[offset + 0x55], data[offset + 0x56], data[offset + 0x57],
+            data[offset + 0x50],
+            data[offset + 0x51],
+            data[offset + 0x52],
+            data[offset + 0x53],
+            data[offset + 0x54],
+            data[offset + 0x55],
+            data[offset + 0x56],
+            data[offset + 0x57],
         ]) as u32;
 
         let name_len = u16::from_le_bytes([data[offset + 0x38], data[offset + 0x39]]);
         let name_buf = u64::from_le_bytes([
-            data[offset + 0x40], data[offset + 0x41], data[offset + 0x42], data[offset + 0x43],
-            data[offset + 0x44], data[offset + 0x45], data[offset + 0x46], data[offset + 0x47],
+            data[offset + 0x40],
+            data[offset + 0x41],
+            data[offset + 0x42],
+            data[offset + 0x43],
+            data[offset + 0x44],
+            data[offset + 0x45],
+            data[offset + 0x46],
+            data[offset + 0x47],
         ]);
 
         let name = if name_len > 0 && name_buf != 0 {
             let name_ptr = name_buf as usize;
             if name_ptr >= data_base && name_ptr + name_len as usize <= data_end {
-                let name_slice = unsafe {
-                    std::slice::from_raw_parts(name_buf as *const u8, name_len as usize)
-                };
+                let name_slice =
+                    unsafe { std::slice::from_raw_parts(name_buf as *const u8, name_len as usize) };
                 let wide: Vec<u16> = name_slice
                     .chunks_exact(2)
                     .map(|c| u16::from_le_bytes([c[0], c[1]]))
@@ -468,13 +531,12 @@ fn enumerate_modules_via_peb(
         _pad0: [0u8; 0x18],
         ldr: 0,
     };
-    read_mem(
-        syscalls,
-        gadget,
-        handle,
-        pbi.peb_base_address,
-        unsafe { std::slice::from_raw_parts_mut(&mut peb as *mut _ as *mut u8, std::mem::size_of::<PebPartial>()) },
-    )?;
+    read_mem(syscalls, gadget, handle, pbi.peb_base_address, unsafe {
+        std::slice::from_raw_parts_mut(
+            &mut peb as *mut _ as *mut u8,
+            std::mem::size_of::<PebPartial>(),
+        )
+    })?;
 
     if peb.ldr == 0 {
         return Err(InterfaceError::InvalidResponse);
@@ -485,13 +547,12 @@ fn enumerate_modules_via_peb(
         _pad0: [0u8; 0x10],
         in_load_order_module_list: ListEntry { flink: 0, blink: 0 },
     };
-    read_mem(
-        syscalls,
-        gadget,
-        handle,
-        peb.ldr,
-        unsafe { std::slice::from_raw_parts_mut(&mut ldr_data as *mut _ as *mut u8, std::mem::size_of::<PebLdrPartial>()) },
-    )?;
+    read_mem(syscalls, gadget, handle, peb.ldr, unsafe {
+        std::slice::from_raw_parts_mut(
+            &mut ldr_data as *mut _ as *mut u8,
+            std::mem::size_of::<PebLdrPartial>(),
+        )
+    })?;
 
     // InLoadOrderModuleList.Flink is the first real entry
     let mut current = ldr_data.in_load_order_module_list.flink;
@@ -506,13 +567,12 @@ fn enumerate_modules_via_peb(
         }
 
         let mut entry: LdrEntryPartial = unsafe { std::mem::zeroed() };
-        read_mem(
-            syscalls,
-            gadget,
-            handle,
-            current,
-            unsafe { std::slice::from_raw_parts_mut(&mut entry as *mut _ as *mut u8, std::mem::size_of::<LdrEntryPartial>()) },
-        )?;
+        read_mem(syscalls, gadget, handle, current, unsafe {
+            std::slice::from_raw_parts_mut(
+                &mut entry as *mut _ as *mut u8,
+                std::mem::size_of::<LdrEntryPartial>(),
+            )
+        })?;
 
         if entry.dll_base == 0 {
             current = entry.in_load_order_links.flink;
@@ -522,7 +582,13 @@ fn enumerate_modules_via_peb(
         // Read BaseDllName from target process
         let mut dll_name_buf = vec![0u8; entry.base_dll_name.length as usize];
         if !dll_name_buf.is_empty() {
-            let _ = read_mem(syscalls, gadget, handle, entry.base_dll_name.buffer, &mut dll_name_buf);
+            let _ = read_mem(
+                syscalls,
+                gadget,
+                handle,
+                entry.base_dll_name.buffer,
+                &mut dll_name_buf,
+            );
         }
 
         let dll_name_ucs2: Vec<u16> = dll_name_buf

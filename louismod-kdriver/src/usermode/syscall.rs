@@ -2,7 +2,10 @@ use std::fs;
 
 use windows::Win32::System::LibraryLoader::GetModuleHandleA;
 
-use crate::error::{IResult, InterfaceError};
+use crate::error::{
+    IResult,
+    InterfaceError,
+};
 
 // ---------------------------------------------------------------
 // Syscall numbers extracted from a clean ntdll.dll
@@ -21,10 +24,9 @@ pub fn load_syscall_table() -> IResult<SyscallTable> {
     let sys_dir = system_directory()?;
     let ntdll_path = format!("{}\\ntdll.dll", sys_dir);
 
-    let data =
-        fs::read(&ntdll_path).map_err(|e| InterfaceError::CommandGenericError {
-            message: format!("Failed to read {}: {}", ntdll_path, e),
-        })?;
+    let data = fs::read(&ntdll_path).map_err(|e| InterfaceError::CommandGenericError {
+        message: format!("Failed to read {}: {}", ntdll_path, e),
+    })?;
 
     if data.len() < 0x1000 {
         return Err(InterfaceError::InvalidResponse);
@@ -81,10 +83,18 @@ pub fn load_syscall_table() -> IResult<SyscallTable> {
     if data_dir_offset + 8 > data.len() {
         return Err(InterfaceError::InvalidResponse);
     }
-    let export_rva =
-        u32::from_le_bytes([data[data_dir_offset], data[data_dir_offset + 1], data[data_dir_offset + 2], data[data_dir_offset + 3]]);
-    let export_size =
-        u32::from_le_bytes([data[data_dir_offset + 4], data[data_dir_offset + 5], data[data_dir_offset + 6], data[data_dir_offset + 7]]);
+    let export_rva = u32::from_le_bytes([
+        data[data_dir_offset],
+        data[data_dir_offset + 1],
+        data[data_dir_offset + 2],
+        data[data_dir_offset + 3],
+    ]);
+    let export_size = u32::from_le_bytes([
+        data[data_dir_offset + 4],
+        data[data_dir_offset + 5],
+        data[data_dir_offset + 6],
+        data[data_dir_offset + 7],
+    ]);
 
     if export_rva == 0 || export_size == 0 {
         return Err(InterfaceError::CommandGenericError {
@@ -102,19 +112,34 @@ pub fn load_syscall_table() -> IResult<SyscallTable> {
     //   + AddressOfFunctions(4) + AddressOfNames(4) + AddressOfNameOrdinals(4) = 40 bytes
     let exp = export_offset;
     let number_of_functions = u32::from_le_bytes([
-        data[exp + 16], data[exp + 17], data[exp + 18], data[exp + 19],
+        data[exp + 16],
+        data[exp + 17],
+        data[exp + 18],
+        data[exp + 19],
     ]);
     let number_of_names = u32::from_le_bytes([
-        data[exp + 20], data[exp + 21], data[exp + 22], data[exp + 23],
+        data[exp + 20],
+        data[exp + 21],
+        data[exp + 22],
+        data[exp + 23],
     ]);
     let address_of_functions = u32::from_le_bytes([
-        data[exp + 24], data[exp + 25], data[exp + 26], data[exp + 27],
+        data[exp + 24],
+        data[exp + 25],
+        data[exp + 26],
+        data[exp + 27],
     ]);
     let address_of_names = u32::from_le_bytes([
-        data[exp + 28], data[exp + 29], data[exp + 30], data[exp + 31],
+        data[exp + 28],
+        data[exp + 29],
+        data[exp + 30],
+        data[exp + 31],
     ]);
     let address_of_name_ordinals = u32::from_le_bytes([
-        data[exp + 32], data[exp + 33], data[exp + 34], data[exp + 35],
+        data[exp + 32],
+        data[exp + 33],
+        data[exp + 34],
+        data[exp + 35],
     ]);
 
     let func_rva = rva_to_offset(&data, sections_offset, address_of_functions)?;
@@ -135,20 +160,26 @@ pub fn load_syscall_table() -> IResult<SyscallTable> {
     // Scan the name pointer table
     for i in 0..number_of_names {
         let idx = i as usize;
-        if idx * 4 >= (name_rva + 4).saturating_sub(name_rva) {
-            break;
-        }
         let name_ptr_offset = name_rva + idx * 4;
         if name_ptr_offset + 4 > data.len() {
             break;
         }
-        let name_offset = rva_to_offset(&data, sections_offset, u32::from_le_bytes([
-            data[name_ptr_offset], data[name_ptr_offset + 1],
-            data[name_ptr_offset + 2], data[name_ptr_offset + 3],
-        ]))?;
+        let name_rva_val = u32::from_le_bytes([
+            data[name_ptr_offset],
+            data[name_ptr_offset + 1],
+            data[name_ptr_offset + 2],
+            data[name_ptr_offset + 3],
+        ]);
+        let name_offset = match rva_to_offset(&data, sections_offset, name_rva_val) {
+            Ok(off) => off,
+            Err(_) => continue,
+        };
 
         // Read the function name as C string
-        let name_end = data[name_offset..].iter().position(|&b| b == 0).unwrap_or(0);
+        let name_end = data[name_offset..]
+            .iter()
+            .position(|&b| b == 0)
+            .unwrap_or(0);
         if name_end == 0 {
             continue;
         }
@@ -165,22 +196,28 @@ pub fn load_syscall_table() -> IResult<SyscallTable> {
                 if idx * 2 + 2 > data.len().saturating_sub(ord_rva) {
                     break;
                 }
-                let ordinal = u16::from_le_bytes([data[ord_rva + idx * 2], data[ord_rva + idx * 2 + 1]]);
+                let ordinal =
+                    u16::from_le_bytes([data[ord_rva + idx * 2], data[ord_rva + idx * 2 + 1]]);
                 if (ordinal as usize) < number_of_functions as usize {
                     let func_offset = func_rva + (ordinal as usize) * 4;
                     if func_offset + 4 <= data.len() {
                         let func_rva_val = u32::from_le_bytes([
-                            data[func_offset], data[func_offset + 1],
-                            data[func_offset + 2], data[func_offset + 3],
+                            data[func_offset],
+                            data[func_offset + 1],
+                            data[func_offset + 2],
+                            data[func_offset + 3],
                         ]);
                         // Resolve function RVA to file offset and read syscall number
-                        if let Ok(stub_offset) = rva_to_offset(&data, sections_offset, func_rva_val) {
+                        if let Ok(stub_offset) = rva_to_offset(&data, sections_offset, func_rva_val)
+                        {
                             if stub_offset + 5 <= data.len() {
                                 if data[stub_offset] == 0xB8 {
                                     // mov eax, imm32
                                     let sysnum = u32::from_le_bytes([
-                                        data[stub_offset + 1], data[stub_offset + 2],
-                                        data[stub_offset + 3], data[stub_offset + 4],
+                                        data[stub_offset + 1],
+                                        data[stub_offset + 2],
+                                        data[stub_offset + 3],
+                                        data[stub_offset + 4],
                                     ]);
                                     found[ti] = sysnum;
                                     found_mask |= 1 << ti;
@@ -305,11 +342,11 @@ pub fn find_syscall_ret_gadget() -> IResult<u64> {
         // NT headers → optional header → section count
         let file_header_offset = e_lfanew + 4;
         let num_sections =
-            u16::from_le_bytes([data[file_header_offset + 2], data[file_header_offset + 3]]) as usize;
-        let size_of_optional_header = u16::from_le_bytes([
-            data[file_header_offset + 16],
-            data[file_header_offset + 17],
-        ]) as usize;
+            u16::from_le_bytes([data[file_header_offset + 2], data[file_header_offset + 3]])
+                as usize;
+        let size_of_optional_header =
+            u16::from_le_bytes([data[file_header_offset + 16], data[file_header_offset + 17]])
+                as usize;
 
         let sections_offset = file_header_offset + 20 + size_of_optional_header;
 
@@ -323,16 +360,21 @@ pub fn find_syscall_ret_gadget() -> IResult<u64> {
             let name = std::str::from_utf8(&data[shdr..shdr + 8]).unwrap_or("");
             if name.starts_with(".text") {
                 let virtual_address = u32::from_le_bytes([
-                    data[shdr + 12], data[shdr + 13], data[shdr + 14], data[shdr + 15],
+                    data[shdr + 12],
+                    data[shdr + 13],
+                    data[shdr + 14],
+                    data[shdr + 15],
                 ]);
                 let virtual_size = u32::from_le_bytes([
-                    data[shdr + 8], data[shdr + 9], data[shdr + 10], data[shdr + 11],
+                    data[shdr + 8],
+                    data[shdr + 9],
+                    data[shdr + 10],
+                    data[shdr + 11],
                 ]);
 
                 let text_start = base.add(virtual_address as usize);
                 let text_size = virtual_size as usize;
-                let text_bytes =
-                    std::slice::from_raw_parts(text_start, text_size.min(0x100000));
+                let text_bytes = std::slice::from_raw_parts(text_start, text_size.min(0x100000));
 
                 // Scan for 0x0F 0x05 0xC3 (syscall; ret)
                 let needle: [u8; 3] = [0x0F, 0x05, 0xC3];
@@ -454,20 +496,39 @@ fn rva_to_offset(data: &[u8], sections_offset: usize, rva: u32) -> IResult<usize
     for i in 0..96 {
         // max 96 sections
         let shdr = sections_offset + i * SECTION_HEADER_SIZE;
-        if shdr + 8 + 4 + 4 > data.len() {
+        if shdr + SECTION_HEADER_SIZE > data.len() {
             break;
         }
-        let virtual_address = u32::from_le_bytes([
-            data[shdr + 12], data[shdr + 13], data[shdr + 14], data[shdr + 15],
-        ]);
         let virtual_size = u32::from_le_bytes([
-            data[shdr + 8], data[shdr + 9], data[shdr + 10], data[shdr + 11],
+            data[shdr + 8],
+            data[shdr + 9],
+            data[shdr + 10],
+            data[shdr + 11],
+        ]);
+        let virtual_address = u32::from_le_bytes([
+            data[shdr + 12],
+            data[shdr + 13],
+            data[shdr + 14],
+            data[shdr + 15],
+        ]);
+        let size_of_raw_data = u32::from_le_bytes([
+            data[shdr + 16],
+            data[shdr + 17],
+            data[shdr + 18],
+            data[shdr + 19],
         ]);
         let pointer_to_raw_data = u32::from_le_bytes([
-            data[shdr + 20], data[shdr + 21], data[shdr + 22], data[shdr + 23],
+            data[shdr + 20],
+            data[shdr + 21],
+            data[shdr + 22],
+            data[shdr + 23],
         ]);
 
-        if rva >= virtual_address && rva < virtual_address + virtual_size {
+        let section_limit = virtual_size.max(size_of_raw_data);
+        if section_limit == 0 {
+            continue;
+        }
+        if rva >= virtual_address && rva < virtual_address + section_limit {
             let offset = (rva - virtual_address) as usize + pointer_to_raw_data as usize;
             if offset < data.len() {
                 return Ok(offset);
@@ -490,13 +551,7 @@ fn rva_to_offset(data: &[u8], sections_offset: usize, rva: u32) -> IResult<usize
 /// Arguments and syscall number must be valid for the target syscall.
 #[inline(never)]
 #[allow(dead_code)]
-pub unsafe fn syscall_4(
-    number: u32,
-    arg1: u64,
-    arg2: u64,
-    arg3: u64,
-    arg4: u64,
-) -> i32 {
+pub unsafe fn syscall_4(number: u32, arg1: u64, arg2: u64, arg3: u64, arg4: u64) -> i32 {
     let status: i32;
     core::arch::asm!(
         "mov r10, rcx",

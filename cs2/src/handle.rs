@@ -15,16 +15,6 @@ use std::{
 };
 
 use anyhow::Context;
-use obfstr::obfstr;
-use raw_struct::{
-    FromMemoryView,
-    MemoryView,
-};
-use utils_state::{
-    State,
-    StateCacheType,
-    StateRegistry,
-};
 use louismod_kdriver::{
     create_driver,
     DirectoryTableType,
@@ -36,6 +26,16 @@ use louismod_kdriver::{
     ProcessId,
     ProcessModuleInfo,
     ProcessProtectionMode,
+};
+use obfstr::obfstr;
+use raw_struct::{
+    FromMemoryView,
+    MemoryView,
+};
+use utils_state::{
+    State,
+    StateCacheType,
+    StateRegistry,
 };
 
 use crate::{
@@ -208,37 +208,62 @@ impl CS2Handle {
         let size = std::mem::size_of::<T>();
         if size <= 64 {
             let mut buf = [0u8; 64];
-            self.ke_interface
-                .read_bytes(self.process_id, DirectoryTableType::Default, address, &mut buf[..size])?;
+            self.ke_interface.read_bytes(
+                self.process_id,
+                DirectoryTableType::Default,
+                address,
+                &mut buf[..size],
+            )?;
             Ok(unsafe { (buf.as_ptr() as *const T).read_unaligned() })
         } else {
             let mut buf = vec![0u8; size];
-            self.ke_interface
-                .read_bytes(self.process_id, DirectoryTableType::Default, address, &mut buf)?;
+            self.ke_interface.read_bytes(
+                self.process_id,
+                DirectoryTableType::Default,
+                address,
+                &mut buf,
+            )?;
             Ok(unsafe { (buf.as_ptr() as *const T).read_unaligned() })
         }
     }
 
     pub fn read_slice<T: Copy>(&self, address: u64, buffer: &mut [T]) -> anyhow::Result<()> {
-        let byte_len = buffer.len().checked_mul(std::mem::size_of::<T>()).ok_or_else(|| {
-            anyhow::anyhow!("read_slice size overflow")
-        })?;
+        let byte_len = buffer
+            .len()
+            .checked_mul(std::mem::size_of::<T>())
+            .ok_or_else(|| anyhow::anyhow!("read_slice size overflow"))?;
 
         // Stack-allocate small reads to avoid per-read heap allocation
         const STACK_BUF: usize = 256;
         if byte_len <= STACK_BUF {
             let mut bytes = [0u8; STACK_BUF];
-            self.ke_interface
-                .read_bytes(self.process_id, DirectoryTableType::Default, address, &mut bytes[..byte_len])?;
+            self.ke_interface.read_bytes(
+                self.process_id,
+                DirectoryTableType::Default,
+                address,
+                &mut bytes[..byte_len],
+            )?;
             unsafe {
-                std::ptr::copy_nonoverlapping(bytes.as_ptr() as *const T, buffer.as_mut_ptr(), buffer.len());
+                std::ptr::copy_nonoverlapping(
+                    bytes.as_ptr() as *const T,
+                    buffer.as_mut_ptr(),
+                    buffer.len(),
+                );
             }
         } else {
             let mut bytes = vec![0u8; byte_len];
-            self.ke_interface
-                .read_bytes(self.process_id, DirectoryTableType::Default, address, &mut bytes)?;
+            self.ke_interface.read_bytes(
+                self.process_id,
+                DirectoryTableType::Default,
+                address,
+                &mut bytes,
+            )?;
             unsafe {
-                std::ptr::copy_nonoverlapping(bytes.as_ptr() as *const T, buffer.as_mut_ptr(), buffer.len());
+                std::ptr::copy_nonoverlapping(
+                    bytes.as_ptr() as *const T,
+                    buffer.as_mut_ptr(),
+                    buffer.len(),
+                );
             }
         }
         Ok(())
@@ -246,13 +271,14 @@ impl CS2Handle {
 
     pub fn write_sized<T: Copy>(&self, address: u64, value: &T) -> anyhow::Result<()> {
         let data = unsafe {
-            std::slice::from_raw_parts(
-                (value as *const T) as *const u8,
-                std::mem::size_of::<T>(),
-            )
+            std::slice::from_raw_parts((value as *const T) as *const u8, std::mem::size_of::<T>())
         };
-        self.ke_interface
-            .write_bytes(self.process_id, DirectoryTableType::Default, address, data)?;
+        self.ke_interface.write_bytes(
+            self.process_id,
+            DirectoryTableType::Default,
+            address,
+            data,
+        )?;
         Ok(())
     }
 

@@ -13,9 +13,7 @@ use crate::settings::{
     EspSelector,
 };
 
-pub async fn get_settings(
-    State(state): State<WebAppState>,
-) -> Json<Value> {
+pub async fn get_settings(State(state): State<WebAppState>) -> Json<Value> {
     let settings = state.settings.read().unwrap();
     match serde_json::to_value(&*settings) {
         Ok(value) => Json(value),
@@ -39,7 +37,9 @@ pub async fn update_settings(
         match serde_json::from_value::<AppSettings>(merged) {
             Ok(new_settings) => *settings = new_settings,
             Err(e) => {
-                return Json(serde_json::json!({"error": format!("failed to apply settings: {}", e)}))
+                return Json(
+                    serde_json::json!({"error": format!("failed to apply settings: {}", e)}),
+                )
             }
         }
     }
@@ -50,9 +50,7 @@ pub async fn update_settings(
     Json(serde_json::json!({"status": "ok"}))
 }
 
-pub async fn save_settings(
-    State(state): State<WebAppState>,
-) -> Json<Value> {
+pub async fn save_settings(State(state): State<WebAppState>) -> Json<Value> {
     let settings = state.settings.read().unwrap();
     match crate::settings::save_app_settings(&*settings) {
         Ok(()) => Json(serde_json::json!({"status": "ok"})),
@@ -60,9 +58,7 @@ pub async fn save_settings(
     }
 }
 
-pub async fn get_esp_configs(
-    State(state): State<WebAppState>,
-) -> Json<Value> {
+pub async fn get_esp_configs(State(state): State<WebAppState>) -> Json<Value> {
     let settings = state.settings.read().unwrap();
     let mut configs = serde_json::Map::new();
 
@@ -158,9 +154,7 @@ pub async fn toggle_feature(
         "debug_window" => settings.render_debug_window = !settings.render_debug_window,
         "aim_assist_recoil" => settings.aim_assist_recoil = !settings.aim_assist_recoil,
         "aim_silent" => settings.aim_silent = !settings.aim_silent,
-        other => {
-            return Json(serde_json::json!({"error": format!("unknown feature: {}", other)}))
-        }
+        other => return Json(serde_json::json!({"error": format!("unknown feature: {}", other)})),
     }
 
     state

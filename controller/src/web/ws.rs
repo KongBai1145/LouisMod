@@ -2,7 +2,10 @@ use axum::extract::ws::{
     Message,
     WebSocket,
 };
-use futures_util::{SinkExt, StreamExt};
+use futures_util::{
+    SinkExt,
+    StreamExt,
+};
 use tokio::sync::broadcast;
 
 use super::server::WebAppState;
@@ -13,9 +16,9 @@ pub async fn handle_web_socket(mut socket: WebSocket, state: WebAppState) {
     // Send initial settings on connect
     let initial_msg = {
         let settings = state.settings.read().unwrap();
-        serde_json::to_string(&*settings).ok().map(|json| {
-            format!("{{\"type\":\"settings\",\"payload\":{}}}", json)
-        })
+        serde_json::to_string(&*settings)
+            .ok()
+            .map(|json| format!("{{\"type\":\"settings\",\"payload\":{}}}", json))
     };
 
     if let Some(msg) = initial_msg {

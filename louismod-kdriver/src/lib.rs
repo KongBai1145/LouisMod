@@ -1,12 +1,17 @@
 pub mod command;
 pub mod device;
 pub mod error;
-pub mod types;
 pub mod trait_interface;
+pub mod types;
 pub mod usermode;
 
-use std::sync::Arc;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{
+    atomic::{
+        AtomicUsize,
+        Ordering,
+    },
+    Arc,
+};
 
 /// LouisMod custom kernel driver interface.
 /// Communicates directly with louismod.sys via DeviceIoControl.
@@ -112,11 +117,12 @@ impl LouisModDriver {
         address: u64,
         buffer: &mut [T],
     ) -> IResult<()> {
-        let byte_len = buffer.len().checked_mul(std::mem::size_of::<T>()).ok_or_else(|| {
-            InterfaceError::CommandGenericError {
+        let byte_len = buffer
+            .len()
+            .checked_mul(std::mem::size_of::<T>())
+            .ok_or_else(|| InterfaceError::CommandGenericError {
                 message: "read_slice size overflow".into(),
-            }
-        })?;
+            })?;
         let req = command::build_read_req(process_id, address, byte_len as u32);
         let reply = self.device.send_command(command::CMD_READ_MEMORY, &req)?;
 
@@ -127,7 +133,11 @@ impl LouisModDriver {
         }
 
         unsafe {
-            std::ptr::copy_nonoverlapping(reply.as_ptr() as *const T, buffer.as_mut_ptr(), buffer.len());
+            std::ptr::copy_nonoverlapping(
+                reply.as_ptr() as *const T,
+                buffer.as_mut_ptr(),
+                buffer.len(),
+            );
         }
         Ok(())
     }
@@ -192,14 +202,12 @@ impl LouisModDriver {
     // ------------------------------------------------------------
 
     pub fn enable_cr3_shenanigan_mitigation(&self) -> IResult<()> {
-        self.device
-            .send_command(command::CMD_CR3_ENABLE, &[])?;
+        self.device.send_command(command::CMD_CR3_ENABLE, &[])?;
         Ok(())
     }
 
     pub fn disable_cr3_shenanigan_mitigation(&self) -> IResult<()> {
-        self.device
-            .send_command(command::CMD_CR3_DISABLE, &[])?;
+        self.device.send_command(command::CMD_CR3_DISABLE, &[])?;
         Ok(())
     }
 
@@ -319,7 +327,10 @@ pub fn create_driver() -> IResult<Arc<dyn DriverInterface>> {
             Ok(Arc::new(d))
         }
         Err(e) => {
-            log::warn!("Kernel driver unavailable ({}), falling back to user-mode", e);
+            log::warn!(
+                "Kernel driver unavailable ({}), falling back to user-mode",
+                e
+            );
             UserModeDriver::create().map(|d| Arc::new(d) as Arc<dyn DriverInterface>)
         }
     }
@@ -328,13 +339,29 @@ pub fn create_driver() -> IResult<Arc<dyn DriverInterface>> {
 // ------------------------------------------------------------
 // Re-exports
 // ------------------------------------------------------------
-pub use crate::command::{
-    build_batch_read_req, build_keyboard_input, build_module_list_req, build_mouse_input,
-    build_protect_process_req, build_read_req, build_request, build_write_req, parse_batch_read_reply,
-    parse_init_reply, parse_module_list, parse_process_list, parse_response, BatchReadEntry,
+pub use crate::{
+    command::{
+        build_batch_read_req,
+        build_keyboard_input,
+        build_module_list_req,
+        build_mouse_input,
+        build_protect_process_req,
+        build_read_req,
+        build_request,
+        build_write_req,
+        parse_batch_read_reply,
+        parse_init_reply,
+        parse_module_list,
+        parse_process_list,
+        parse_response,
+        BatchReadEntry,
+    },
+    device::DeviceHandle,
+    error::{
+        IResult,
+        InterfaceError,
+    },
+    trait_interface::DriverInterface,
+    types::*,
+    usermode::UserModeDriver,
 };
-pub use crate::device::DeviceHandle;
-pub use crate::error::{IResult, InterfaceError};
-pub use crate::trait_interface::DriverInterface;
-pub use crate::types::*;
-pub use crate::usermode::UserModeDriver;

@@ -1,5 +1,10 @@
-use crate::error::{IResult, InterfaceError};
-use crate::types::*;
+use crate::{
+    error::{
+        IResult,
+        InterfaceError,
+    },
+    types::*,
+};
 
 // ------------------------------------------------------------
 // Wire protocol constants (must match driver/driver.h)
@@ -69,7 +74,11 @@ pub fn build_request(command_id: u32, payload: &[u8]) -> Vec<u8> {
     packet
 }
 
-pub fn parse_response<T>(response: &[u8], xor_key: u32, parser: fn(&[u8]) -> IResult<T>) -> IResult<T> {
+pub fn parse_response<T>(
+    response: &[u8],
+    xor_key: u32,
+    parser: fn(&[u8]) -> IResult<T>,
+) -> IResult<T> {
     if response.len() < WIRE_HEADER_SIZE {
         return Err(InterfaceError::InvalidResponse);
     }
@@ -119,7 +128,9 @@ fn rand_key() -> u32 {
     }
     // LCG: advance the seed
     let old = SEED.load(std::sync::atomic::Ordering::Relaxed);
-    let new = old.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+    let new = old
+        .wrapping_mul(6364136223846793005)
+        .wrapping_add(1442695040888963407);
     SEED.store(new, std::sync::atomic::Ordering::Relaxed);
     (new >> 32) as u32
 }
@@ -129,10 +140,10 @@ fn rand_key() -> u32 {
 // ------------------------------------------------------------
 pub(crate) fn ntstatus_to_error(status: i32) -> InterfaceError {
     match status {
-        -0x3FFFFFFF => InterfaceError::MemoryAccessFailed,     // STATUS_UNSUCCESSFUL
-        -0x40000005 => InterfaceError::BufferAllocationFailed,  // STATUS_INSUFFICIENT_RESOURCES
-        -0x3FFFFFB4 => InterfaceError::MemoryAccessFailed,      // STATUS_PARTIAL_COPY
-        -0x3FFFFFDE => InterfaceError::FeatureUnsupported,      // STATUS_NOT_IMPLEMENTED
+        -0x3FFFFFFF => InterfaceError::MemoryAccessFailed, // STATUS_UNSUCCESSFUL
+        -0x40000005 => InterfaceError::BufferAllocationFailed, // STATUS_INSUFFICIENT_RESOURCES
+        -0x3FFFFFB4 => InterfaceError::MemoryAccessFailed, // STATUS_PARTIAL_COPY
+        -0x3FFFFFDE => InterfaceError::FeatureUnsupported, // STATUS_NOT_IMPLEMENTED
         _ => {
             if status < 0 {
                 InterfaceError::CommandGenericError {
@@ -392,8 +403,18 @@ pub fn parse_batch_read_reply(data: &[u8]) -> IResult<Vec<BatchReadEntry>> {
         if offset + 8 > data.len() {
             break;
         }
-        let status = i32::from_le_bytes([data[offset], data[offset + 1], data[offset + 2], data[offset + 3]]);
-        let data_size = u32::from_le_bytes([data[offset + 4], data[offset + 5], data[offset + 6], data[offset + 7]]) as usize;
+        let status = i32::from_le_bytes([
+            data[offset],
+            data[offset + 1],
+            data[offset + 2],
+            data[offset + 3],
+        ]);
+        let data_size = u32::from_le_bytes([
+            data[offset + 4],
+            data[offset + 5],
+            data[offset + 6],
+            data[offset + 7],
+        ]) as usize;
         offset += 8;
 
         let entry_data = if data_size > 0 && offset + data_size <= data.len() {

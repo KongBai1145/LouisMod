@@ -31,12 +31,12 @@ mod class_name_cache;
 pub use class_name_cache::*;
 
 mod pattern;
-pub use pattern::*;
 pub use louismod_kdriver::{
+    InterfaceError,
     KeyboardState,
     MouseState,
-    InterfaceError,
 };
+pub use pattern::*;
 
 pub mod schema_runtime;
 
@@ -49,9 +49,9 @@ pub fn create_dump(
     let mut schema = schema_runtime::RuntimeSchemaState::from_game(registry)?;
 
     if let Some(filter) = modules {
-        schema.offsets.retain(|offset| {
-            filter.iter().any(|f| offset.module.contains(f))
-        });
+        schema
+            .offsets
+            .retain(|offset| filter.iter().any(|f| offset.module.contains(f)));
     }
 
     Ok(schema)

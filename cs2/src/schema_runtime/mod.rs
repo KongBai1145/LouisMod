@@ -6,11 +6,11 @@ use std::{
 use anyhow::Context;
 use sha1::Digest;
 use utils_state::StateRegistry;
-use crate::InterfaceError;
 
 use crate::{
     schema_runtime::provider::RuntimeSchemaProvider,
     CS2Offset,
+    InterfaceError,
     StateBuildInfo,
     StatePredefinedOffset,
 };

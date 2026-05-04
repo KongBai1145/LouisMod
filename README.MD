@@ -3,32 +3,35 @@
   <img src="https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-0078D6?style=flat-square&logo=windows" alt="Platform">
   <img src="https://img.shields.io/badge/language-Rust%20nightly-dea584?style=flat-square&logo=rust" alt="Language">
   <img src="https://img.shields.io/badge/status-active-success?style=flat-square" alt="Status">
-  <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License">
 </p>
 
 <p align="center">
   <h1 align="center">LouisMod</h1>
-  <p align="center"><strong>External CS2 Gameplay Enhancer</strong><br>
-  <sub>Fork of Valthrun with dual backend, enhanced features, and web control panel</sub></p>
+  <p align="center">
+    <strong>External CS2 Gameplay Enhancer / 外部 CS2 游戏增强器</strong><br>
+    <sub>Fork of Valthrun · Dual Backend · Web Control Panel · Silent Aim</sub>
+  </p>
 </p>
 
 ---
 
-## Overview
+## Overview / 概述
 
-LouisMod is an **external, read-only** Counter-Strike 2 gameplay enhancer. It never injects code into the game process and never reads from game memory without explicit purpose — leaving minimal detectable footprint.
+LouisMod is an **external, read-only** Counter-Strike 2 gameplay enhancer. It never injects code into the game process — leaving minimal detectable footprint.
 
-### Why LouisMod?
+LouisMod 是一个**外部、只读**的 CS2 游戏增强器。不向游戏进程注入代码，检测痕迹极小。
 
-| | Traditional Cheats | LouisMod |
+### Why LouisMod? / 为什么选择 LouisMod？
+
+| | Traditional Cheats / 传统外挂 | **LouisMod** |
 |---|---|---|
-| **Detection vector** | DLL injection + hooking | External process, indirect syscalls |
-| **Memory footprint** | Injected code in CS2 address space | Own process, no cross-process interference |
-| **Syscall origin** | ntdll hooks (detected) | ntdll gadget call → looks native |
-| **Backend** | Kernel driver or Win32 API | Auto-fallback: kernel → user-mode syscall camouflage |
-| **No driver?** | Useless | Works perfectly for VAC via user-mode backend |
+| Detection vector / 检测方式 | DLL injection + hooking | External process, indirect syscalls / 外部进程+间接syscall |
+| Memory footprint / 内存占用 | Injected code in CS2 space | Own process, no cross-process interference / 独立进程 |
+| Syscall origin / 调用来源 | ntdll hooks (detected) | ntdll gadget call → looks native / 伪装成ntdll调用 |
+| Backend / 后端 | Kernel OR Win32 API | Auto-fallback: kernel → user-mode syscall camouflage |
+| No driver? / 无驱动? | Useless / 无法使用 | Works for VAC via user-mode / 用户态即可官匹 |
 
-### Dual Backend Architecture
+### Dual Backend Architecture / 双后端架构
 
 ```
 ┌────────────────────────────────────────────┐
@@ -50,105 +53,82 @@ LouisMod is an **external, read-only** Counter-Strike 2 gameplay enhancer. It ne
 │             │              │                 │
 │     requires driver     zero setup           │
 │     admin required      no admin needed      │
+│     需要驱动+管理员      无需配置无需管理员    │
 └────────────────────────────────────────────┘
 ```
 
-The factory function `create_driver()` probes the kernel driver first. On failure — which is the default for most users — it seamlessly falls back to the user-mode backend. No configuration, no driver compilation, no reboot.
+`create_driver()` probes the kernel driver first. On failure — the default for most users — it falls back to user-mode. **No config, no driver, no reboot.**
+
+`create_driver()` 先尝试内核驱动，失败后自动回退用户态。**零配置，无驱动，无需重启。**
 
 ---
 
-## Features
+## Features / 功能特性
 
-### Visual (ESP)
+### ESP / 视觉辅助
 
-| Feature | Description |
+| Feature / 功能 | Description / 描述 |
 |---------|-------------|
-| Skeleton ESP | Full bone rendering with configurable colors |
-| Box ESP | 2D / 3D bounding boxes with dynamic sizing |
-| Health bar | Gradient health indication |
-| Head dot | Precise head position marker |
-| Info panel | Name, HP, armor, weapon — per-player overlay |
-| Weapon ESP | Rendered weapon names and icons |
-| Chicken ESP | Because why not |
-| Offscreen arrows | Directional indicators for off-screen targets |
-| Multi-profile | Enemy / Team / Visibility-based configs simultaneously |
+| Skeleton ESP / 骨骼 | Full bone rendering / 完整骨骼渲染 |
+| Box ESP / 盒子 | 2D / 3D bounding boxes / 动态包围盒 |
+| Health bar / 血量条 | Gradient health indication / 渐变色血量 |
+| Head dot / 头点 | Precise head marker / 精确头部标记 |
+| Info panel / 信息显示 | Name, HP, armor, weapon / 名称血量护甲武器 |
+| Offscreen arrows / 超车箭头 | Directional indicators / 屏幕外目标指示 |
+| Multi-profile / 多配置 | Enemy/Team/Visibility simultaneous / 同时启用多套配置 |
 
-### Combat
+### Combat / 战斗
 
-| Feature | Description |
+| Feature / 功能 | Description / 描述 |
 |---------|-------------|
-| **Silent Aim** | Writes view angles directly to server — no local mouse movement |
-| **Trigger Bot** | Auto-fire on crosshair target with configurable delay |
-| **Recoil Control** | Automatic recoil compensation with bullet-count threshold |
+| **Silent Aim / 静默自瞄** | Writes angles to server — no mouse movement / 直接写入服务器角度 |
+| **Trigger Bot / 自动扳机** | Auto-fire on crosshair with delay / 准星指向敌人自动开枪 |
+| **Recoil Control / 压枪** | Automatic recoil compensation / 自动后坐力补偿 |
 
-### Utility
+### Utility / 工具
 
-| Feature | Description |
+| Feature / 功能 | Description / 描述 |
 |---------|-------------|
-| **Grenade Helper** | Trajectory preview for smoke, molotov, flashbang, HE |
-| **Bomb Timer** | C4 countdown, defuse timer, position indicator |
-| **Spectator List** | Shows who's watching you |
-| **Sniper Crosshair** | Persistent crosshair when scoped |
-| **Stream Proof** | Anti-screenshot — overlay hidden from streaming software |
+| **Grenade Helper / 投掷物助手** | Trajectory preview / 轨迹预览 |
+| **Bomb Timer / 炸弹计时** | C4 countdown, defuse info / 倒计时拆弹信息 |
+| **Spectator List / 观战列表** | Shows who's watching / 显示观战者 |
+| **Sniper Crosshair / 狙击准星** | Persistent crosshair when scoped / 开镜持久准星 |
+| **Stream Proof / 防截屏** | Hidden from streaming software / 直播软件不可见 |
 
-### Radar
+### Radar / 雷达
 
-External radar at [radar.valth.run](https://radar.valth.run) — full map with player positions, grenade trajectories, and bomb status.
+External radar at [radar.valth.run](https://radar.valth.run) / 外部雷达页面
 
 ---
 
-## Web Control Panel
+## Web Control Panel / Web 控制面板
 
-All configuration is done through a browser-based dashboard at **`http://localhost:16384`**.
-
-```
-┌─────────────────────────────────────────────────┐
-│  Dashboard  │  ESP  │  Trigger  │  Silent Aim   │
-│─────────────────────────────────────────────────│
-│                                                 │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐      │
-│  │ ESP      │  │ Trigger  │  │ Silent   │      │
-│  │ Config   │  │ Bot      │  │ Aim      │      │
-│  │          │  │ Settings │  │ Settings │      │
-│  └──────────┘  └──────────┘  └──────────┘      │
-│                                                 │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐      │
-│  │ Grenade  │  │ Config   │  │ Settings │      │
-│  │ Helper   │  │ Profiles │  │          │      │
-│  └──────────┘  └──────────┘  └──────────┘      │
-│                                                 │
-│  Ctrl+K: Command Palette  │  WebSocket live sync│
-└─────────────────────────────────────────────────┘
+```bash
+http://localhost:16384
 ```
 
-- **Real-time sync** — Changes reflect in-game instantly via WebSocket
-- **Profile system** — Save / load / export / import config profiles as JSON
-- **Command palette** — `Ctrl+K` for keyboard-driven navigation
+| Page / 页面 | Description / 描述 |
+|-----|------|
+| Dashboard / 仪表板 | One-click toggle all / 一键开关 |
+| ESP Config / ESP配置 | Visual config editor / 可视化编辑器 |
+| Trigger Bot | Delay, mode, hotkey / 延迟模式热键 |
+| Silent Aim / 静默自瞄 | FOV, hotkey, auto-shoot / 视野热键自动开枪 |
+| Profiles / 配置文件 | Save/load/export/import / JSON导入导出 |
+
+- **Real-time sync** via WebSocket / WebSocket实时同步
+- **Command palette** `Ctrl+K` / 命令面板
 
 ---
 
-## Default Keybinds
+## Quick Start / 快速开始
 
-| Action | Key |
-|--------|-----|
-| Open settings overlay | `Pause` |
-| Trigger Bot | `MouseMiddle` (hold) |
-| Silent Aim | None (AlwaysOn) |
-| ESP toggle | None (AlwaysOn) |
+### Prerequisites / 环境要求
 
-All rebindable via web panel or in-game overlay.
-
----
-
-## Quick Start
-
-### Prerequisites
-
-- **Windows 10 or 11, x64**
+- **Windows 10/11 x64**
 - **Rust nightly** — `rustup default nightly`
-- That's it. No WDK, no Visual Studio, no driver signing certificate.
+- That's it. / 就这些。
 
-### Build
+### Build / 构建
 
 ```bash
 git clone --recursive https://github.com/KongBai1145/LouisMod
@@ -156,180 +136,142 @@ cd LouisMod
 cargo build --release -p controller
 ```
 
-### Run
+### Run / 运行
 
 ```bash
 .\target\release\controller.exe
+# Web panel: http://localhost:16384
 ```
 
-Open `http://localhost:16384` in your browser. Configure. Play.
+> No driver needed for VAC-protected official matchmaking. / 官匹无需驱动。
 
-> The user-mode backend handles everything for VAC-protected servers. No driver setup needed.
+### Optional: Kernel Driver / 可选：安装内核驱动
 
-### Optional: Install Kernel Driver
-
-For Faceit, ESEA, or maximum stealth:
+For Faceit/ESEA or maximum stealth / 针对第三方反作弊或最强隐匿：
 
 ```bash
-# 1. Build the driver (MSVC + WDK required)
 cd louismod-kdriver\driver
 build.bat
-
-# 2. Install (run as Administrator)
 cd ..\..\tools
-setup_all.cmd
-
-# 3. Launch — auto-detects and uses kernel backend
-..\target\release\controller.exe
+setup_all.cmd          # Run as Administrator / 管理员运行
 ```
-
-See `tools/README.md` for detailed instructions.
 
 ---
 
-## Architecture
+## Architecture / 项目结构
 
 ```
 LouisMod/
-├── controller/                    # Main application
+├── controller/                    # 主程序 / Main application
 │   ├── src/
-│   │   ├── main.rs                    # Entry point, main loop
-│   │   ├── enhancements/              # Feature modules
-│   │   │   ├── player/                # Player ESP system
-│   │   │   ├── trigger.rs             # Trigger Bot
-│   │   │   ├── silent_aim.rs          # Silent Aim
-│   │   │   ├── aim.rs                 # Recoil Control
-│   │   │   ├── grenade_helper.rs      # Grenade Helper
-│   │   │   ├── bomb.rs                # Bomb Timer
-│   │   │   ├── spectators_list.rs     # Spectator List
-│   │   │   └── sniper_crosshair.rs    # Sniper Crosshair
-│   │   ├── settings/                  # Configuration system
-│   │   ├── web/                       # Axum HTTP + WebSocket server
-│   │   ├── view/                      # ImGui overlay rendering
-│   │   └── utils/                     # Helpers, ImGui extensions
-│   └── resources/web/                 # Web frontend (SPA)
-├── cs2/                              # Game interaction layer
+│   │   ├── main.rs                    # 入口主循环 / Entry point
+│   │   ├── enhancements/              # 功能模块 / Features
+│   │   │   ├── silent_aim.rs          # Silent Aim / 静默自瞄
+│   │   │   ├── trigger.rs             # Trigger Bot / 自动扳机
+│   │   │   ├── aim.rs                 # Recoil Control / 压枪
+│   │   │   ├── grenade_helper.rs      # Grenade Helper / 投掷物
+│   │   │   ├── bomb.rs                # Bomb Timer / 炸弹计时
+│   │   │   └── player/                # Player ESP / 玩家ESP
+│   │   ├── settings/                  # 配置系统 / Config
+│   │   ├── web/                       # Axum HTTP + WebSocket
+│   │   └── view/                      # ImGui overlay
+│   └── resources/web/                 # Web frontend / 前端
+├── cs2/                              # 游戏交互层 / Game layer
+├── louismod-kdriver/                 # 驱动+用户态双后端 / Dual backend
 │   └── src/
-│       ├── handle.rs                  # CS2Handle: memory I/O
-│       ├── schema_runtime/            # Runtime schema resolver
-│       └── state/                     # Game state types
-├── louismod-kdriver/                 # Kernel driver + user-mode backend
-│   └── src/
-│       ├── lib.rs                     # Factory, LouisModDriver
+│       ├── lib.rs                     # Factory / 工厂函数
 │       ├── trait_interface.rs         # DriverInterface trait
-│       ├── command.rs                 # IOCTL protocol
-│       ├── device.rs                  # DeviceHandle
-│       ├── types.rs                   # Shared types
 │       └── usermode/
 │           ├── mod.rs                 # UserModeDriver
 │           └── syscall.rs             # Syscall table, gadget camouflage
-├── cs2-schema/                       # Schema system
-│   ├── generated/                     # Auto-generated structs
-│   ├── provider/                      # runtime_offset! macro
-│   ├── dumper/                        # Schema dump tool
-│   └── cutl/                          # CUtl containers
-├── overlay/                          # ImGui overlay layer
-├── radar/                            # Radar service
-├── tools/                            # Driver installation scripts
-└── utils/state                       # StateRegistry framework
+├── cs2-schema/                       # Schema 系统
+├── overlay/                          # ImGui overlay
+├── radar/                            # Radar / 雷达
+├── tools/                            # Driver scripts / 驱动脚本
+└── utils/state                       # StateRegistry
 ```
 
 ---
 
-## Security Model
+## Security Model / 安全模型
 
-### User-Mode Backend Deep Dive
+### 1. Indirect Syscalls / 间接系统调用
 
-The user-mode driver achieves stealth without a kernel driver through three techniques:
+Syscall numbers extracted from clean on-disk `ntdll.dll` — not the in-memory copy that anti-cheats may hook. Each `Nt*` call uses raw inline assembly bypassing user-mode hooks.
 
-**1. Indirect Syscalls**
+从磁盘干净 `ntdll.dll` 提取 syscall 号——不使用可能被 hook 的内存中的 ntdll。每个 `Nt*` 调用使用裸内联汇编，绕过用户态 hook。
 
-Syscall numbers are extracted from a clean on-disk `ntdll.dll` — not from the in-memory copy which anti-cheats may hook. Each `Nt*` call uses raw inline assembly with the extracted numbers, bypassing any user-mode hooks on ntdll.
+### 2. Return Address Camouflage / 返回地址伪装
 
-**2. Return Address Camouflage**
+Instead of executing `syscall` in our module (kernel records it), we `call` into a `syscall; ret` gadget inside ntdll.dll. The kernel sees ntdll.dll as the syscall origin.
 
-Instead of executing `syscall` in our own module (which the kernel would record), we `call` into a `syscall; ret` gadget located inside the already-loaded `ntdll.dll`. The kernel's syscall origin tracking sees `ntdll.dll`, not `controller.exe`.
+不在自己模块执行 `syscall`，而是 `call` 到 ntdll.dll 内部的 `syscall;ret` gadget。内核记录的调用地址在 ntdll.dll 内。
 
 ```
-Direct (detectable):            Camouflaged (safe):
+Direct / 直接 (可检测):             Camouflaged / 伪装 (安全):
 controller.exe                  controller.exe
   └─ syscall ← recorded here      └─ call ntdll!syscall;ret
                                                    └─ syscall ← recorded here
 ```
 
-**3. Bypassed Win32 APIs**
+### 3. Bypassed APIs / 绕过的 API
 
-- **OpenProcess** → `NtOpenProcess` via indirect syscall (bypasses kernel32 + ntdll hooks)
-- **Process enumeration** → `NtQuerySystemInformation(SystemProcessInformation)` via indirect syscall
-- **Module enumeration** → PEB walk via `NtQueryInformationProcess` + `NtReadVirtualMemory`
-
-### Detection Surface
-
-| Component | User-Mode | Kernel Driver |
-|-----------|-----------|---------------|
-| Process handle | In user handle table | In kernel handle table |
-| Syscall origin | ntdll gadget (appears native) | Kernel IOCTL |
-| Process visibility | Normal (PID visible) | Can be hidden |
-| Input simulation | SendInput | Kernel-level input |
-| Anti-anti-cheat | VAC only | VAC + Faceit/ESEA |
+- **OpenProcess** → `NtOpenProcess` via indirect syscall
+- **Process enum** → `NtQuerySystemInformation(SystemProcessInformation)`
+- **Module enum** → PEB walk via indirect syscalls
 
 ---
 
-## Configuration
+## Keybinds / 键位
 
-`config.yaml` is auto-generated on first run alongside the executable. All settings are editable through the Web Panel or directly in the YAML file.
+| Action / 功能 | Key / 默认键 |
+|--------|-----|
+| Settings overlay / 设置 | `Pause` |
+| Trigger Bot | `MouseMiddle` (hold / 按住) |
 
-```yaml
-key_settings: Pause
-trigger_bot_mode: Trigger
-key_trigger_bot: MouseMiddle
-aim_silent: false
-aim_silent_fov: 5.0
-aim_silent_team_check: true
-# ... all features toggleable per-profile
-```
+All rebindable / 全部可自定义
 
 ---
 
-## FAQ
+## FAQ / 常见问题
 
 <details>
-<summary><b>Does this work without a kernel driver?</b></summary>
-Yes. The user-mode backend provides full functionality for official matchmaking (VAC). Simply build and run. No driver, no admin, no reboot.
+<summary><b>Without kernel driver? / 无驱动可用吗？</b></summary>
+Yes. User-mode backend works for VAC-protected official matchmaking. Build and run.
+可以。用户态后端对 VAC 官匹完全可用。构建即用。
 </details>
 
 <details>
-<summary><b>Is this detectable?</b></summary>
-VAC is a user-mode anti-cheat. LouisMod's indirect syscalls + gadget camouflage bypass its detection vectors. That said, no cheat is 100% undetectable — use at your own risk.
+<summary><b>Detectable? / 会被检测吗？</b></summary>
+VAC is user-mode. Indirect syscalls + gadget camouflage bypass its detection vectors. No cheat is 100% undetectable — use at your own risk.
+VAC 是用户态反作弊。间接 syscall + gadget 伪装可绕过检测。没有任何外挂 100% 不被检测——风险自负。
 </details>
 
 <details>
-<summary><b>Can I use this on Faceit / ESEA?</b></summary>
-Faceit and ESEA use kernel-level anti-cheats. The kernel driver backend is designed for this, but full compatibility depends on the specific anti-cheat version. The user-mode backend will not suffice.
-</details>
-
-<details>
-<summary><b>Why Rust?</b></summary>
-Zero-cost abstractions, memory safety, and a rich type system make Rust ideal for systems programming. Schema structs are generated at compile time with correct alignment, and the macro system enables runtime offset resolution with static caching.
+<summary><b>Faceit/ESEA? / 能用第三方平台吗？</b></summary>
+Faceit and ESEA use kernel-level anti-cheats. The kernel driver backend is designed for this. User-mode will not suffice.
+Faceit/ESEA 使用内核级反作弊。需使用内核驱动后端。用户态不够。
 </details>
 
 ---
 
-## Credits
+## Disclaimer / 免责声明
 
-- **Original Valthrun** by [WolverinDEV](https://github.com/valthrun) — The foundation of this project
-- **Fork & Enhancements** by [LouisAlice](https://github.com/KongBai1145)
-- **Discord** — [Join the community](https://discord.gg/ecKbpAPW5T)
-- **Wiki** — [wiki.valth.run](https://wiki.valth.run)
+This project is for **educational and research purposes only**. Using this software may violate Valve's terms of service. Use at your own risk.
+
+本项目**仅供学习和研究**。使用本软件可能违反 Valve 服务条款。风险自负。
 
 ---
 
-## Disclaimer
+## Credits / 致谢
 
-This project is for **educational and research purposes only**. Using this software may violate Valve's Terms of Service. The author assumes no liability for any consequences of its use.
+- **Original / 原版** [Valthrun](https://github.com/valthrun/valthrun-cs2) by WolverinDEV
+- **Fork & Enhancements / 本版增强** by [LouisAlice](https://github.com/KongBai1145)
+- **Discord** — [Join / 加入](https://discord.gg/ecKbpAPW5T)
 
 ---
 
 <p align="center">
-  <sub>Built with Rust · Powered by indirect syscalls · No injection, no hooks</sub>
+  <sub>Built with Rust · Powered by indirect syscalls · No injection, no hooks</sub><br>
+  <sub>Rust 构建 · 间接 syscall 驱动 · 无注入 无 Hook</sub>
 </p>
