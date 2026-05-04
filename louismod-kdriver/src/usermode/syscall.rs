@@ -147,7 +147,6 @@ pub fn load_syscall_table() -> IResult<SyscallTable> {
         data[exp + 38],
         data[exp + 39],
     ]);
-
     let func_rva = rva_to_offset(&data, sections_offset, address_of_functions)?;
     let name_rva = rva_to_offset(&data, sections_offset, address_of_names)?;
     let ord_rva = rva_to_offset(&data, sections_offset, address_of_name_ordinals)?;
@@ -216,17 +215,19 @@ pub fn load_syscall_table() -> IResult<SyscallTable> {
                         // Resolve function RVA to file offset and read syscall number
                         if let Ok(stub_offset) = rva_to_offset(&data, sections_offset, func_rva_val)
                         {
-                            if stub_offset + 5 <= data.len() {
-                                if data[stub_offset] == 0xB8 {
-                                    // mov eax, imm32
+                            // Search for `mov eax, imm32` (0xB8) within first 32 bytes of stub.
+                            // On older Windows, it's at offset 0; on newer builds (Win11 26200+),
+                            // there's a `mov r10, rcx` (0x4C 0x8B 0xD1) before it.
+                            let stub_max = (stub_offset + 32).min(data.len());
+                            for si in stub_offset..stub_max.saturating_sub(5) {
+                                if data[si] == 0xB8 {
                                     let sysnum = u32::from_le_bytes([
-                                        data[stub_offset + 1],
-                                        data[stub_offset + 2],
-                                        data[stub_offset + 3],
-                                        data[stub_offset + 4],
+                                        data[si + 1], data[si + 2], data[si + 3], data[si + 4],
                                     ]);
+                                    log::debug!("  found syscall {} = 0x{:X} (at stub offset +{})", target_name.0, sysnum, si - stub_offset);
                                     found[ti] = sysnum;
                                     found_mask |= 1 << ti;
+                                    break;
                                 }
                             }
                         }
@@ -574,6 +575,7 @@ pub unsafe fn syscall_4(number: u32, arg1: u64, arg2: u64, arg3: u64, arg4: u64)
         in("r8")  arg3,
         in("r9")  arg4,
         lateout("eax") status,
+        out("r11") _,
         options(nostack),
     );
     status
@@ -605,6 +607,7 @@ pub unsafe fn syscall_5(
         in("r9")  arg4,
         // arg5 is on the stack at [rsp+0x28] — already placed there by caller
         lateout("eax") status,
+        out("r11") _,
         options(nostack),
     );
     status
