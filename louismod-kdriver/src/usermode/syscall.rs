@@ -598,9 +598,9 @@ pub unsafe fn syscall_5(
 ) -> i32 {
     let status: i32;
     core::arch::asm!(
+        "mov r11, QWORD PTR [rsp + 0x30]",
+        "mov QWORD PTR [rsp + 0x28], r11",
         "mov r10, rcx",
-        "mov rax, QWORD PTR [rsp + 0x30]",
-        "mov QWORD PTR [rsp + 0x28], rax",
         "syscall",
         in("eax") number,
         in("rcx") arg1,
