@@ -222,9 +222,17 @@ pub fn load_syscall_table() -> IResult<SyscallTable> {
                             for si in stub_offset..stub_max.saturating_sub(5) {
                                 if data[si] == 0xB8 {
                                     let sysnum = u32::from_le_bytes([
-                                        data[si + 1], data[si + 2], data[si + 3], data[si + 4],
+                                        data[si + 1],
+                                        data[si + 2],
+                                        data[si + 3],
+                                        data[si + 4],
                                     ]);
-                                    log::debug!("  found syscall {} = 0x{:X} (at stub offset +{})", target_name.0, sysnum, si - stub_offset);
+                                    log::debug!(
+                                        "  found syscall {} = 0x{:X} (at stub offset +{})",
+                                        target_name.0,
+                                        sysnum,
+                                        si - stub_offset
+                                    );
                                     found[ti] = sysnum;
                                     found_mask |= 1 << ti;
                                     break;
@@ -393,7 +401,11 @@ pub fn find_syscall_ret_gadget() -> IResult<u64> {
                         return Ok(text_start.add(j) as u64);
                     }
                 }
-                log::debug!("  gadget scan: .text VA=0x{:X} size={} — 0F 05 C3 not found", virtual_address, text_size);
+                log::debug!(
+                    "  gadget scan: .text VA=0x{:X} size={} — 0F 05 C3 not found",
+                    virtual_address,
+                    text_size
+                );
                 break;
             }
         }
