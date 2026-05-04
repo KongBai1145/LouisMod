@@ -485,16 +485,13 @@ pub unsafe fn syscall_5_via_gadget(
 }
 
 /// Walk section headers to convert a relative virtual address to a file offset.
+///
+/// Handles the PE header area specially: if the RVA falls before the first
+/// section's VirtualAddress, it's in the header area where file offset == RVA.
 fn rva_to_offset(data: &[u8], sections_offset: usize, rva: u32) -> IResult<usize> {
-    // Each section header is 40 bytes
-    // IMAGE_SECTION_HEADER:
-    //   Name[8] + VirtualSize(4) + VirtualAddress(4) + SizeOfRawData(4)
-    //   + PointerToRawData(4) + PointerToRelocations(4) + PointerToLinenumbers(4)
-    //   + NumberOfRelocations(2) + NumberOfLinenumbers(2) + Characteristics(4)
     const SECTION_HEADER_SIZE: usize = 40;
 
     for i in 0..96 {
-        // max 96 sections
         let shdr = sections_offset + i * SECTION_HEADER_SIZE;
         if shdr + SECTION_HEADER_SIZE > data.len() {
             break;
@@ -523,6 +520,15 @@ fn rva_to_offset(data: &[u8], sections_offset: usize, rva: u32) -> IResult<usize
             data[shdr + 22],
             data[shdr + 23],
         ]);
+
+        // On first section, check if RVA falls in header area (before first section)
+        if i == 0 && rva < virtual_address {
+            // Header area: PE headers are mapped at RVA 0 with the same layout as file
+            let offset = rva as usize;
+            if offset < data.len() {
+                return Ok(offset);
+            }
+        }
 
         let section_limit = virtual_size.max(size_of_raw_data);
         if section_limit == 0 {
