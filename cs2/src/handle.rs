@@ -330,12 +330,30 @@ impl CS2Handle {
 
         let mut buffer = Vec::<u8>::with_capacity(length);
         buffer.resize(length, 0);
-        self.ke_interface.read_bytes(
-            self.process_id,
-            DirectoryTableType::Default,
-            address,
-            &mut buffer,
-        )?;
+
+        // Read in 64KB chunks; skip pages that can't be read (not committed).
+        // This avoids STATUS_ACCESS_VIOLATION when scanning large modules.
+        const CHUNK_SIZE: usize = 0x10000; // 64 KB
+        let mut offset = 0usize;
+        while offset < length {
+            let chunk_len = CHUNK_SIZE.min(length - offset);
+            let mut chunk = vec![0u8; chunk_len];
+            match self.ke_interface.read_bytes(
+                self.process_id,
+                DirectoryTableType::Default,
+                address + offset as u64,
+                &mut chunk,
+            ) {
+                Ok(()) => {
+                    log::debug!("  read chunk @ 0x{:X} ok", address + offset as u64);
+                    buffer[offset..offset + chunk_len].copy_from_slice(&chunk);
+                }
+                Err(_e) => {
+                    log::warn!("  skip chunk @ 0x{:X}: {}", address + offset as u64, _e);
+                }
+            }
+            offset += chunk_len;
+        }
 
         for (index, window) in buffer.windows(pattern.length()).enumerate() {
             if !pattern.is_matching(window) {
@@ -349,7 +367,7 @@ impl CS2Handle {
     }
 
     pub fn resolve_signature(&self, module: Module, signature: &Signature) -> anyhow::Result<u64> {
-        log::trace!("Resolving '{}' in {:?}", signature.debug_name, module);
+        log::debug!("Resolving '{}' in {:?}", signature.debug_name, module);
         let module_info = self.get_module_info(module).with_context(|| {
             format!("{} {}", obfstr!("missing module"), module.get_module_name())
         })?;

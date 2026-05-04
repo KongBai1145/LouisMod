@@ -319,6 +319,7 @@ pub fn nt_open_process_via_gadget(
             &mut cid as *mut ClientId as u64,
         )
     };
+    log::info!("NtOpenProcess(pid={}, access=0x{:X}) -> status=0x{:X}, handle=0x{:X}", pid, desired_access, status as u32, handle);
     if status < 0 {
         return Err(InterfaceError::CommandGenericError {
             message: format!("NtOpenProcess failed on PID {}: 0x{:X}", pid, status as u32),
@@ -465,11 +466,13 @@ pub unsafe fn syscall_4_via_gadget(
 
 /// Perform a 5-argument indirect syscall via the ntdll gadget.
 ///
-/// For 5-arg syscalls, the gadget approach is unreliable because arg5 stack
-/// offset depends on how the compiler assigns the gadget + syscall-number
-/// parameters relative to the register constraints. We always use direct
-/// syscall here — the return address still shows our module, but it's the
-/// same as calling ntdll's own Nt* wrapper (which also uses syscall).
+/// Perform a 5-argument indirect syscall via the ntdll gadget.
+///
+/// For 5-arg calls we always use direct syscall. The gadget approach is
+/// too fragile because arg5's stack offset depends on the function's own
+/// parameter count and the compiler's register allocation. The return
+/// address from `syscall_5` still points into our module, but that's
+/// the same as calling ntdll's own Nt* wrappers.
 ///
 /// If `gadget` is 0, falls back to direct inline syscall.
 ///
@@ -485,7 +488,15 @@ pub unsafe fn syscall_5_via_gadget(
     arg4: u64,
     _arg5: u64,
 ) -> i32 {
-    syscall_5(number, arg1, arg2, arg3, arg4, _arg5)
+    // NOTE: we must assign to a local then return it — writing `syscall_5(...)`
+    // as a tail expression lets the compiler turn the call into a tail-call
+    // (jmp instead of call), which reuses our caller's stack frame.  In that
+    // frame _arg5 is the *7th* parameter (offset [rsp+0x38]), but syscall_5
+    // expects it as the *6th* parameter ([rsp+0x30]).  The explicit `let`
+    // and `return` defeat the tail-call optimisation so the normal call ABI
+    // is used.
+    let status = syscall_5(number, arg1, arg2, arg3, arg4, _arg5);
+    status
 }
 
 /// Walk section headers to convert a relative virtual address to a file offset.

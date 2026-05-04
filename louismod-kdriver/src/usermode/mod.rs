@@ -12,6 +12,7 @@ use std::{
 use windows::Win32::{
     System::Threading::{
         PROCESS_QUERY_INFORMATION,
+        PROCESS_QUERY_LIMITED_INFORMATION,
         PROCESS_VM_READ,
         PROCESS_VM_WRITE,
     },
@@ -74,7 +75,8 @@ impl UserModeDriver {
         let pid = find_cs2_process(gadget, syscalls.nt_query_system_information)?;
 
         // Open a handle via indirect NtOpenProcess — bypasses kernel32/ntdll hooks
-        let desired_access = PROCESS_VM_READ.0 | PROCESS_VM_WRITE.0 | PROCESS_QUERY_INFORMATION.0;
+        let desired_access = PROCESS_VM_READ.0 | PROCESS_QUERY_INFORMATION.0;
+        log::info!("Opening CS2 PID={} with desired_access=0x{:X} (VM_READ|QUERY_INFO)", pid, desired_access);
         let handle_val = syscall::nt_open_process_via_gadget(
             gadget,
             syscalls.nt_open_process,
@@ -175,6 +177,7 @@ impl DriverInterface for UserModeDriver {
         };
         self.read_calls.fetch_add(1, Ordering::Relaxed);
         if status < 0 {
+            log::error!("UM-READ-FAIL addr=0x{:X} size={} status=0x{:X} bytes_read={} sysnum=0x{:X} handle=0x{:X}", addr, buf.len(), status as u32, bytes_read, self.syscalls.nt_read_virtual_memory, self.process_handle);
             return Err(InterfaceError::MemoryAccessFailed);
         }
         Ok(())
