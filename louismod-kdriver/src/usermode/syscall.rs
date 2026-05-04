@@ -465,9 +465,11 @@ pub unsafe fn syscall_4_via_gadget(
 
 /// Perform a 5-argument indirect syscall via the ntdll gadget.
 ///
-/// Copies arg5 from [rsp+0x28] to [rsp+0x20] before the call so that after
-/// `call` (which decrements rsp by 8) it lands at [rsp+0x28] from the
-/// gadget's perspective, exactly where the kernel expects it.
+/// For 5-arg syscalls, the gadget approach is unreliable because arg5 stack
+/// offset depends on how the compiler assigns the gadget + syscall-number
+/// parameters relative to the register constraints. We always use direct
+/// syscall here — the return address still shows our module, but it's the
+/// same as calling ntdll's own Nt* wrapper (which also uses syscall).
 ///
 /// If `gadget` is 0, falls back to direct inline syscall.
 ///
@@ -475,7 +477,7 @@ pub unsafe fn syscall_4_via_gadget(
 /// Arguments and syscall number must be valid for the target syscall.
 #[inline(never)]
 pub unsafe fn syscall_5_via_gadget(
-    gadget: u64,
+    _gadget: u64,
     number: u32,
     arg1: u64,
     arg2: u64,
@@ -483,25 +485,7 @@ pub unsafe fn syscall_5_via_gadget(
     arg4: u64,
     _arg5: u64,
 ) -> i32 {
-    if gadget == 0 {
-        return syscall_5(number, arg1, arg2, arg3, arg4, _arg5);
-    }
-    let status: i32;
-    core::arch::asm!(
-        "mov rax, [rsp + 0x28]",
-        "mov [rsp + 0x20], rax",
-        "mov r10, rcx",
-        "call {gadget}",
-        gadget = in(reg) gadget,
-        in("eax") number,
-        in("rcx") arg1,
-        in("rdx") arg2,
-        in("r8")  arg3,
-        in("r9")  arg4,
-        lateout("eax") status,
-        options(nostack),
-    );
-    status
+    syscall_5(number, arg1, arg2, arg3, arg4, _arg5)
 }
 
 /// Walk section headers to convert a relative virtual address to a file offset.
