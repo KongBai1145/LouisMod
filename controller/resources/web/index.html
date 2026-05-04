@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LouisMod 控制面板</title>
+<title>LouisMod</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -154,6 +154,22 @@ body {
 .conn-badge.connected .dot { box-shadow: 0 0 6px currentColor; }
 
 .header-spacer { flex: 1; }
+
+.lang-switch {
+  display: flex; align-items: center; gap: 2px;
+  padding: 2px; border-radius: 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+}
+.lang-switch button {
+  padding: 4px 8px; border: none; border-radius: 6px;
+  background: transparent; color: var(--text-tertiary);
+  font-size: 11px; font-weight: 600; font-family: inherit; cursor: pointer;
+  transition: all var(--transition);
+}
+.lang-switch button.active {
+  background: var(--accent); color: #fff;
+}
 
 .search-trigger {
   display: flex; align-items: center; gap: 8px;
@@ -480,6 +496,7 @@ input[type="range"]:focus { background: rgba(255,255,255,0.15); }
   .content { padding: 16px; }
   .feature-grid { grid-template-columns: 1fr; }
   .profile-select select { min-width: 60px; }
+  .lang-switch button { padding: 4px 6px; font-size: 10px; }
 }
 
 /* Misc */
@@ -515,7 +532,7 @@ input[type="range"]:focus { background: rgba(255,255,255,0.15); }
 <!-- Command Palette -->
 <div id="cmd-overlay" class="cmd-overlay" onclick="if(event.target===this)closeCmd()">
   <div class="cmd-palette">
-    <input id="cmd-input" class="cmd-input" type="text" placeholder="搜索设置..." autocomplete="off" oninput="filterCmd()" onkeydown="onCmdKey(event)">
+    <input id="cmd-input" class="cmd-input" type="text" placeholder="Search settings..." autocomplete="off" oninput="filterCmd()" onkeydown="onCmdKey(event)">
     <div id="cmd-results" class="cmd-results"></div>
   </div>
 </div>
@@ -524,7 +541,7 @@ input[type="range"]:focus { background: rgba(255,255,255,0.15); }
 <div id="modal-overlay" class="modal-overlay" onclick="if(event.target===this)closeModal()">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title" id="modal-title">对话框</span>
+      <span class="modal-title" id="modal-title">Dialog</span>
       <button class="modal-close" onclick="closeModal()">&times;</button>
     </div>
     <div class="modal-body" id="modal-body"></div>
@@ -546,33 +563,33 @@ input[type="range"]:focus { background: rgba(255,255,255,0.15); }
     <nav class="sidebar-nav" id="sidebar-nav">
       <div class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-        <span class="nav-label">仪表盘</span>
+        <span class="nav-label" data-i18n="nav.dashboard">Dashboard</span>
       </div>
       <div class="nav-item" data-page="esp" onclick="navigateTo('esp')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-        <span class="nav-label">ESP 配置</span>
+        <span class="nav-label" data-i18n="nav.esp">ESP Config</span>
       </div>
       <div class="nav-item" data-page="triggerbot" onclick="navigateTo('triggerbot')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-        <span class="nav-label">扳机辅助</span>
+        <span class="nav-label" data-i18n="nav.triggerbot">Trigger Bot</span>
       </div>
       <div class="nav-item" data-page="silentaim" onclick="navigateTo('silentaim')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
-        <span class="nav-label">静默自瞄</span>
+        <span class="nav-label" data-i18n="nav.silentaim">Silent Aim</span>
       </div>
       <div class="nav-item" data-page="grenade" onclick="navigateTo('grenade')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/><circle cx="12" cy="12" r="3"/></svg>
-        <span class="nav-label">投掷物助手</span>
+        <span class="nav-label" data-i18n="nav.grenade">Grenade Helper</span>
       </div>
       <div class="nav-item" data-page="general" onclick="navigateTo('general')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-        <span class="nav-label">通用设置</span>
+        <span class="nav-label" data-i18n="nav.general">General</span>
       </div>
     </nav>
     <div class="sidebar-footer">
       <button class="btn btn-ghost btn-sm w-full" onclick="saveSettingsToDisk()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        <span>保存到磁盘</span>
+        <span data-i18n="nav.saveToDisk">Save to Disk</span>
       </button>
     </div>
   </aside>
@@ -583,14 +600,19 @@ input[type="range"]:focus { background: rgba(255,255,255,0.15); }
     <header class="header">
       <div class="conn-badge" id="connBadge">
         <span class="dot"></span>
-        <span id="connLabel">未连接</span>
+        <span id="connLabel" data-i18n="conn.disconnected">Disconnected</span>
       </div>
 
       <div class="header-spacer"></div>
 
+      <div class="lang-switch" id="langSwitch">
+        <button data-lang="zh" class="active">中</button>
+        <button data-lang="en">EN</button>
+      </div>
+
       <div class="search-trigger" onclick="openCmd()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        搜索
+        <span data-i18n="search.label">Search</span>
         <kbd>^K</kbd>
       </div>
 
@@ -599,16 +621,16 @@ input[type="range"]:focus { background: rgba(255,255,255,0.15); }
       </div>
 
       <div class="header-actions">
-        <button class="icon-btn" onclick="saveProfile()" title="保存当前配置">
+        <button class="icon-btn" onclick="saveProfile()" data-i18n-title="profile.saveTooltip">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
         </button>
-        <button class="icon-btn" onclick="exportSettings()" title="导出 JSON">
+        <button class="icon-btn" onclick="exportSettings()" data-i18n-title="profile.exportTooltip">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         </button>
-        <button class="icon-btn" onclick="importSettings()" title="导入 JSON">
+        <button class="icon-btn" onclick="importSettings()" data-i18n-title="profile.importTooltip">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         </button>
-        <button class="icon-btn" onclick="deleteCurrentProfile()" title="删除当前配置" style="color:var(--danger)">
+        <button class="icon-btn" onclick="deleteCurrentProfile()" data-i18n-title="profile.deleteTooltip" style="color:var(--danger)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         </button>
       </div>
@@ -619,8 +641,8 @@ input[type="range"]:focus { background: rgba(255,255,255,0.15); }
       <!-- Dashboard -->
       <div id="page-dashboard" class="page active">
         <div class="page-header">
-          <h1 class="page-title">仪表盘</h1>
-          <p class="page-desc">快速开关常用功能</p>
+          <h1 class="page-title" data-i18n="page.dashboard">Dashboard</h1>
+          <p class="page-desc" data-i18n="page.dashboardDesc">Quick-toggle features</p>
         </div>
         <div class="feature-grid" id="featureToggles"></div>
       </div>
@@ -628,22 +650,22 @@ input[type="range"]:focus { background: rgba(255,255,255,0.15); }
       <!-- ESP -->
       <div id="page-esp" class="page">
         <div class="page-header">
-          <h1 class="page-title">ESP 配置</h1>
-          <p class="page-desc">管理透视显示配置</p>
+          <h1 class="page-title" data-i18n="page.esp">ESP Configuration</h1>
+          <p class="page-desc" data-i18n="page.espDesc">Manage wallhack display settings</p>
         </div>
         <div class="grid-sidebar">
           <div>
             <div class="card">
-              <div class="card-header">配置树</div>
+              <div class="card-header" data-i18n="card.configTree">Config Tree</div>
               <div class="card-body compact" id="espTree"></div>
             </div>
           </div>
           <div>
             <div class="card" id="espConfigCard">
               <div class="card-header">
-                <span id="espConfigTitle">选择配置</span>
+                <span id="espConfigTitle" data-i18n="esp.selectConfig">Select a Config</span>
                 <div class="flex items-center gap-2">
-                  <span class="text-xs text-secondary">启用</span>
+                  <span class="text-xs text-secondary" data-i18n="esp.enabled">Enabled</span>
                   <label class="toggle">
                     <input type="checkbox" id="espConfigEnabled" onchange="toggleEspConfigEnabled()">
                     <span class="slider"></span>
@@ -653,7 +675,7 @@ input[type="range"]:focus { background: rgba(255,255,255,0.15); }
               <div class="card-body" id="espConfigBody">
                 <div class="empty-state">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                  <p>从左侧选择一个配置</p>
+                  <p data-i18n="esp.selectHint">Select a config from the left</p>
                 </div>
               </div>
             </div>
@@ -664,16 +686,16 @@ input[type="range"]:focus { background: rgba(255,255,255,0.15); }
       <!-- Trigger Bot -->
       <div id="page-triggerbot" class="page">
         <div class="page-header">
-          <h1 class="page-title">扳机辅助</h1>
-          <p class="page-desc">自动扳机设置</p>
+          <h1 class="page-title" data-i18n="page.triggerbot">Trigger Bot</h1>
+          <p class="page-desc" data-i18n="page.triggerbotDesc">Auto-fire settings</p>
         </div>
         <div class="grid-2">
           <div class="card">
-            <div class="card-header">基本设置</div>
+            <div class="card-header" data-i18n="card.basicSettings">Basic Settings</div>
             <div class="card-body" id="triggerbotSettings"></div>
           </div>
           <div class="card">
-            <div class="card-header">延迟设置</div>
+            <div class="card-header" data-i18n="card.delaySettings">Delay Settings</div>
             <div class="card-body" id="triggerbotDelaySettings"></div>
           </div>
         </div>
@@ -682,21 +704,21 @@ input[type="range"]:focus { background: rgba(255,255,255,0.15); }
       <!-- Silent Aim -->
       <div id="page-silentaim" class="page">
         <div class="page-header">
-          <h1 class="page-title">静默自瞄</h1>
-          <p class="page-desc">子弹追踪目标，视角无抖动</p>
+          <h1 class="page-title" data-i18n="page.silentaim">Silent Aim</h1>
+          <p class="page-desc" data-i18n="page.silentaimDesc">Bullet trajectory correction, no view shake</p>
         </div>
         <div class="grid-2">
           <div class="card">
-            <div class="card-header">基本设置</div>
+            <div class="card-header" data-i18n="card.basicSettings">Basic Settings</div>
             <div class="card-body" id="silentAimSettings"></div>
           </div>
           <div class="card">
-            <div class="card-header">FOV 可视化</div>
+            <div class="card-header" data-i18n="card.fovVisualizer">FOV Visualizer</div>
             <div class="card-body" id="fovVisualizer">
               <div class="fov-canvas-wrap">
                 <canvas id="fovCanvas" width="220" height="220"></canvas>
               </div>
-              <p class="text-xs text-center text-secondary mt-2">当前 FOV: <span id="fovDisplay">5.0</span>°</p>
+              <p class="text-xs text-center text-secondary mt-2"><span data-i18n="esp.currentFov">Current FOV</span>: <span id="fovDisplay">5.0</span>°</p>
             </div>
           </div>
         </div>
@@ -705,16 +727,16 @@ input[type="range"]:focus { background: rgba(255,255,255,0.15); }
       <!-- Grenade Helper -->
       <div id="page-grenade" class="page">
         <div class="page-header">
-          <h1 class="page-title">投掷物助手</h1>
-          <p class="page-desc">投掷物辅助设置</p>
+          <h1 class="page-title" data-i18n="page.grenade">Grenade Helper</h1>
+          <p class="page-desc" data-i18n="page.grenadeDesc">Grenade trajectory preview</p>
         </div>
         <div class="grid-2">
           <div class="card">
-            <div class="card-header">基本设置</div>
+            <div class="card-header" data-i18n="card.basicSettings">Basic Settings</div>
             <div class="card-body" id="grenadeSettings"></div>
           </div>
           <div class="card">
-            <div class="card-header">颜色设置</div>
+            <div class="card-header" data-i18n="card.colorSettings">Color Settings</div>
             <div class="card-body" id="grenadeColorSettings"></div>
           </div>
         </div>
@@ -723,16 +745,16 @@ input[type="range"]:focus { background: rgba(255,255,255,0.15); }
       <!-- General -->
       <div id="page-general" class="page">
         <div class="page-header">
-          <h1 class="page-title">通用设置</h1>
-          <p class="page-desc">全局设置与快捷键</p>
+          <h1 class="page-title" data-i18n="page.general">General Settings</h1>
+          <p class="page-desc" data-i18n="page.generalDesc">Global settings and hotkeys</p>
         </div>
         <div class="grid-2">
           <div class="card">
-            <div class="card-header">快捷键与模式</div>
+            <div class="card-header" data-i18n="card.hotkeyMode">Hotkeys &amp; Mode</div>
             <div class="card-body" id="generalKeySettings"></div>
           </div>
           <div class="card">
-            <div class="card-header">其他</div>
+            <div class="card-header" data-i18n="card.other">Other</div>
             <div class="card-body" id="generalOtherSettings"></div>
           </div>
         </div>
@@ -744,6 +766,402 @@ input[type="range"]:focus { background: rgba(255,255,255,0.15); }
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImport(event)">
 
 <script>
+// ============================================================
+// I18n
+// ============================================================
+const LANGS = {
+  zh: {
+    'conn.connected': '已连接',
+    'conn.disconnected': '未连接',
+    'search.label': '搜索',
+    'search.placeholder': '搜索设置...',
+
+    'nav.dashboard': '仪表盘',
+    'nav.esp': 'ESP 配置',
+    'nav.triggerbot': '扳机辅助',
+    'nav.silentaim': '静默自瞄',
+    'nav.grenade': '投掷物助手',
+    'nav.general': '通用设置',
+    'nav.saveToDisk': '保存到磁盘',
+
+    'page.dashboard': '仪表盘',
+    'page.dashboardDesc': '快速开关常用功能',
+    'page.esp': 'ESP 配置',
+    'page.espDesc': '管理透视显示配置',
+    'page.triggerbot': '扳机辅助',
+    'page.triggerbotDesc': '自动扳机设置',
+    'page.silentaim': '静默自瞄',
+    'page.silentaimDesc': '子弹追踪目标，视角无抖动',
+    'page.grenade': '投掷物助手',
+    'page.grenadeDesc': '投掷物辅助设置',
+    'page.general': '通用设置',
+    'page.generalDesc': '全局设置与快捷键',
+
+    'card.configTree': '配置树',
+    'card.selectConfig': '选择配置',
+    'card.basicSettings': '基本设置',
+    'card.delaySettings': '延迟设置',
+    'card.fovVisualizer': 'FOV 可视化',
+    'card.colorSettings': '颜色设置',
+    'card.hotkeyMode': '快捷键与模式',
+    'card.other': '其他',
+
+    'esp.enabled': '启用',
+    'esp.selectConfig': '选择配置',
+    'esp.selectHint': '从左侧选择一个配置',
+    'esp.noConfig': '该节点没有详细配置',
+    'esp.noConfigs': '无配置',
+    'esp.config': '配置',
+    'esp.currentFov': '当前 FOV',
+    'esp.saveConfig': '保存配置',
+    'esp.boxType': '方框类型',
+    'esp.boxWidth': '方框宽度',
+    'esp.skeleton': '骨骼',
+    'esp.skeletonWidth': '骨骼宽度',
+    'esp.healthBar': '血条',
+    'esp.tracerLine': '跟踪线',
+    'esp.headDot': '头部标记',
+    'esp.showName': '显示名称',
+    'esp.showWeapon': '显示武器',
+    'esp.showDistance': '显示距离',
+    'esp.hpText': '血量文字',
+    'esp.showAmmo': '显示弹药',
+    'esp.showGrenades': '显示投掷物',
+    'esp.showFlags': '显示状态',
+    'esp.offscreenArrows': '屏外箭头',
+    'esp.nearPlayers': '附近玩家检测',
+    'esp.detectDistance': '检测距离',
+    'esp.drawBox': '绘制方框',
+    'esp.showOwner': '显示所属玩家',
+
+    'features.bombTimer': '炸弹计时器',
+    'features.bombTimerDesc': '显示 C4 爆炸倒计时',
+    'features.bombLabel': '炸弹标签',
+    'features.bombLabelDesc': '显示炸弹位置标签',
+    'features.spectatorsList': '旁观者列表',
+    'features.spectatorsListDesc': '显示谁在观看你',
+    'features.watermark': '水印',
+    'features.watermarkDesc': '显示 FPS 和读数',
+    'features.sniperCrosshair': '狙击准星',
+    'features.sniperCrosshairDesc': '开镜时显示辅助准星',
+    'features.recoilControl': '压枪辅助',
+    'features.recoilControlDesc': '自动压枪补偿',
+    'features.antiScreenshot': '防截屏',
+    'features.antiScreenshotDesc': '从屏幕捕获中隐藏覆盖层',
+    'features.silentAim': '静默自瞄',
+    'features.silentAimDesc': '子弹追踪目标，视角无抖动',
+    'features.debugWindow': '调试窗口',
+    'features.debugWindowDesc': '显示 ImGui 调试信息',
+
+    'trigger.mode': '模式',
+    'trigger.teamCheck': '队友检测',
+    'trigger.checkAfterDelay': '延迟后重新检测',
+    'trigger.hotkey': '快捷键',
+    'trigger.minDelay': '最小延迟 (ms)',
+    'trigger.maxDelay': '最大延迟 (ms)',
+    'trigger.shotDuration': '射击持续时间 (ms)',
+
+    'silentaim.enable': '启用静默自瞄',
+    'silentaim.fov': 'FOV',
+    'silentaim.teamCheck': '队友检测',
+    'silentaim.autoShoot': '自动开枪',
+    'silentaim.hotkey': '快捷键',
+
+    'grenade.enable': '启用投掷物助手',
+    'grenade.sortOrder': '排序方式',
+    'grenade.spotBackground': '投掷点背景',
+    'grenade.circleDistance': '圆圈距离',
+    'grenade.circleRadius': '圆圈半径',
+    'grenade.circleSegments': '圆圈分段数',
+    'grenade.colorPosition': '位置颜色',
+    'grenade.colorPositionActive': '位置激活',
+    'grenade.colorAngle': '角度颜色',
+    'grenade.colorAngleActive': '角度激活',
+
+    'general.espMode': 'ESP 模式',
+    'general.espHotkey': 'ESP 快捷键',
+    'general.recoilControl': '压枪辅助',
+    'general.minRecoilBullets': '最小压枪子弹数',
+    'general.mouse360': '鼠标 360° 像素',
+    'general.antiScreenshot': '防截屏',
+    'general.debugWindow': '调试窗口',
+    'general.telemetry': '遥测',
+    'general.radarUrl': '雷达 URL',
+
+    'key.unbound': '未绑定',
+    'key.record': '录制',
+    'key.clear': '清除',
+    'key.recordTitle': '录制快捷键',
+    'key.recordDesc': '请按下你想要绑定的按键...',
+    'key.waitingInput': '等待输入...',
+
+    'toast.settingsSaved': '设置已保存到磁盘',
+    'toast.saveFailed': '保存失败',
+    'toast.settingsExported': '设置已导出',
+    'toast.settingsImported': '设置已导入',
+    'toast.importFailed': '导入失败',
+    'toast.exportFailed': '导出失败',
+    'toast.loadFailed': '加载设置失败',
+    'toast.switchFailed': '切换失败',
+    'toast.espConfigSaved': 'ESP 配置已保存',
+    'toast.espConfigSaveFailed': '保存失败',
+    'toast.enabled': '已启用',
+    'toast.disabled': '已禁用',
+    'toast.configSaved': '配置已保存',
+    'toast.configLoaded': '已加载配置',
+    'toast.configDeleted': '已删除',
+    'toast.configNotFound': '配置不存在',
+    'toast.noConfigToDelete': '没有可删除的配置',
+    'toast.keyBound': '已绑定',
+    'toast.keyCleared': '已清除快捷键',
+    'toast.toggleOn': '已开启',
+    'toast.toggleOff': '已关闭',
+
+    'profile.saveTooltip': '保存当前配置',
+    'profile.exportTooltip': '导出 JSON',
+    'profile.importTooltip': '导入 JSON',
+    'profile.deleteTooltip': '删除当前配置',
+    'profile.placeholder': '配置...',
+    'profile.saveTitle': '保存配置',
+    'profile.saveName': '配置名称',
+    'profile.saveHint': '例如: Competitive',
+    'profile.saveDesc': '当前所有设置将保存到此配置中',
+    'profile.cancel': '取消',
+    'profile.save': '保存',
+    'profile.delete': '删除',
+    'profile.deleteTitle': '删除配置',
+    'profile.deleteConfirm': '确定要删除配置 "<strong>{0}</strong>" 吗？',
+
+    'cmd.navigate': '导航',
+    'cmd.enabled': '已开启',
+    'cmd.disabled': '已关闭',
+    'cmd.saveToDisk': '保存设置到磁盘',
+    'cmd.exportJson': '导出设置 JSON',
+    'cmd.importJson': '导入设置 JSON',
+  },
+  en: {
+    'conn.connected': 'Connected',
+    'conn.disconnected': 'Disconnected',
+    'search.label': 'Search',
+    'search.placeholder': 'Search settings...',
+
+    'nav.dashboard': 'Dashboard',
+    'nav.esp': 'ESP Config',
+    'nav.triggerbot': 'Trigger Bot',
+    'nav.silentaim': 'Silent Aim',
+    'nav.grenade': 'Grenade Helper',
+    'nav.general': 'General',
+    'nav.saveToDisk': 'Save to Disk',
+
+    'page.dashboard': 'Dashboard',
+    'page.dashboardDesc': 'Quick-toggle features',
+    'page.esp': 'ESP Configuration',
+    'page.espDesc': 'Manage wallhack display settings',
+    'page.triggerbot': 'Trigger Bot',
+    'page.triggerbotDesc': 'Auto-fire settings',
+    'page.silentaim': 'Silent Aim',
+    'page.silentaimDesc': 'Bullet trajectory correction, no view shake',
+    'page.grenade': 'Grenade Helper',
+    'page.grenadeDesc': 'Grenade trajectory preview',
+    'page.general': 'General Settings',
+    'page.generalDesc': 'Global settings and hotkeys',
+
+    'card.configTree': 'Config Tree',
+    'card.selectConfig': 'Select Config',
+    'card.basicSettings': 'Basic Settings',
+    'card.delaySettings': 'Delay Settings',
+    'card.fovVisualizer': 'FOV Visualizer',
+    'card.colorSettings': 'Color Settings',
+    'card.hotkeyMode': 'Hotkeys & Mode',
+    'card.other': 'Other',
+
+    'esp.enabled': 'Enabled',
+    'esp.selectConfig': 'Select Config',
+    'esp.selectHint': 'Select a config from the left',
+    'esp.noConfig': 'No detailed config for this node',
+    'esp.noConfigs': 'No configs',
+    'esp.config': 'Config',
+    'esp.currentFov': 'Current FOV',
+    'esp.saveConfig': 'Save Config',
+    'esp.boxType': 'Box Type',
+    'esp.boxWidth': 'Box Width',
+    'esp.skeleton': 'Skeleton',
+    'esp.skeletonWidth': 'Skeleton Width',
+    'esp.healthBar': 'Health Bar',
+    'esp.tracerLine': 'Tracer Line',
+    'esp.headDot': 'Head Dot',
+    'esp.showName': 'Show Name',
+    'esp.showWeapon': 'Show Weapon',
+    'esp.showDistance': 'Show Distance',
+    'esp.hpText': 'HP Text',
+    'esp.showAmmo': 'Show Ammo',
+    'esp.showGrenades': 'Show Grenades',
+    'esp.showFlags': 'Show Flags',
+    'esp.offscreenArrows': 'Off-screen Arrows',
+    'esp.nearPlayers': 'Nearby Player Detection',
+    'esp.detectDistance': 'Detection Distance',
+    'esp.drawBox': 'Draw Box',
+    'esp.showOwner': 'Show Owner',
+
+    'features.bombTimer': 'Bomb Timer',
+    'features.bombTimerDesc': 'Display C4 detonation countdown',
+    'features.bombLabel': 'Bomb Label',
+    'features.bombLabelDesc': 'Show bomb location label',
+    'features.spectatorsList': 'Spectator List',
+    'features.spectatorsListDesc': 'Show who is watching you',
+    'features.watermark': 'Watermark',
+    'features.watermarkDesc': 'Show FPS and readout',
+    'features.sniperCrosshair': 'Sniper Crosshair',
+    'features.sniperCrosshairDesc': 'Show crosshair while scoped',
+    'features.recoilControl': 'Recoil Control',
+    'features.recoilControlDesc': 'Auto recoil compensation',
+    'features.antiScreenshot': 'Anti-Screenshot',
+    'features.antiScreenshotDesc': 'Hide overlay from screen capture',
+    'features.silentAim': 'Silent Aim',
+    'features.silentAimDesc': 'Bullet trajectory correction, no view shake',
+    'features.debugWindow': 'Debug Window',
+    'features.debugWindowDesc': 'Show ImGui debug info',
+
+    'trigger.mode': 'Mode',
+    'trigger.teamCheck': 'Team Check',
+    'trigger.checkAfterDelay': 'Re-check After Delay',
+    'trigger.hotkey': 'Hotkey',
+    'trigger.minDelay': 'Min Delay (ms)',
+    'trigger.maxDelay': 'Max Delay (ms)',
+    'trigger.shotDuration': 'Shot Duration (ms)',
+
+    'silentaim.enable': 'Enable Silent Aim',
+    'silentaim.fov': 'FOV',
+    'silentaim.teamCheck': 'Team Check',
+    'silentaim.autoShoot': 'Auto Shoot',
+    'silentaim.hotkey': 'Hotkey',
+
+    'grenade.enable': 'Enable Grenade Helper',
+    'grenade.sortOrder': 'Sort Order',
+    'grenade.spotBackground': 'Spot Background',
+    'grenade.circleDistance': 'Circle Distance',
+    'grenade.circleRadius': 'Circle Radius',
+    'grenade.circleSegments': 'Circle Segments',
+    'grenade.colorPosition': 'Position Color',
+    'grenade.colorPositionActive': 'Position Active',
+    'grenade.colorAngle': 'Angle Color',
+    'grenade.colorAngleActive': 'Angle Active',
+
+    'general.espMode': 'ESP Mode',
+    'general.espHotkey': 'ESP Hotkey',
+    'general.recoilControl': 'Recoil Control',
+    'general.minRecoilBullets': 'Min Recoil Bullets',
+    'general.mouse360': 'Mouse 360° Pixels',
+    'general.antiScreenshot': 'Anti-Screenshot',
+    'general.debugWindow': 'Debug Window',
+    'general.telemetry': 'Telemetry',
+    'general.radarUrl': 'Radar URL',
+
+    'key.unbound': 'Unbound',
+    'key.record': 'Record',
+    'key.clear': 'Clear',
+    'key.recordTitle': 'Record Hotkey',
+    'key.recordDesc': 'Press the key you want to bind...',
+    'key.waitingInput': 'Waiting for input...',
+
+    'toast.settingsSaved': 'Settings saved to disk',
+    'toast.saveFailed': 'Save failed',
+    'toast.settingsExported': 'Settings exported',
+    'toast.settingsImported': 'Settings imported',
+    'toast.importFailed': 'Import failed',
+    'toast.exportFailed': 'Export failed',
+    'toast.loadFailed': 'Failed to load settings',
+    'toast.switchFailed': 'Toggle failed',
+    'toast.espConfigSaved': 'ESP config saved',
+    'toast.espConfigSaveFailed': 'Save failed',
+    'toast.enabled': 'Enabled',
+    'toast.disabled': 'Disabled',
+    'toast.configSaved': 'Profile saved',
+    'toast.configLoaded': 'Profile loaded',
+    'toast.configDeleted': 'Deleted',
+    'toast.configNotFound': 'Profile not found',
+    'toast.noConfigToDelete': 'No profile to delete',
+    'toast.keyBound': 'Bound',
+    'toast.keyCleared': 'Hotkey cleared',
+    'toast.toggleOn': 'Enabled',
+    'toast.toggleOff': 'Disabled',
+
+    'profile.saveTooltip': 'Save current profile',
+    'profile.exportTooltip': 'Export JSON',
+    'profile.importTooltip': 'Import JSON',
+    'profile.deleteTooltip': 'Delete current profile',
+    'profile.placeholder': 'Profiles...',
+    'profile.saveTitle': 'Save Profile',
+    'profile.saveName': 'Profile Name',
+    'profile.saveHint': 'e.g. Competitive',
+    'profile.saveDesc': 'All current settings will be saved to this profile',
+    'profile.cancel': 'Cancel',
+    'profile.save': 'Save',
+    'profile.delete': 'Delete',
+    'profile.deleteTitle': 'Delete Profile',
+    'profile.deleteConfirm': 'Delete profile "<strong>{0}</strong>"?',
+
+    'cmd.navigate': 'Navigate',
+    'cmd.enabled': 'Enabled',
+    'cmd.disabled': 'Disabled',
+    'cmd.saveToDisk': 'Save Settings to Disk',
+    'cmd.exportJson': 'Export Settings JSON',
+    'cmd.importJson': 'Import Settings JSON',
+  }
+};
+
+let currentLang = localStorage.getItem('louismod_lang') || 'zh';
+
+function t(key, ...args) {
+  const dict = LANGS[currentLang];
+  let val = dict ? dict[key] : undefined;
+  if (val === undefined) {
+    // Fallback to English, then key itself
+    val = (LANGS['en'] && LANGS['en'][key]) || key;
+  }
+  if (args.length) {
+    for (let i = 0; i < args.length; i++) {
+      val = val.replace(`{${i}}`, args[i]);
+    }
+  }
+  return val;
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('louismod_lang', lang);
+  // Update lang switcher buttons
+  document.querySelectorAll('#langSwitch button').forEach(b => {
+    b.classList.toggle('active', b.dataset.lang === lang);
+  });
+  // Update HTML lang attr
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  // Refresh all data-i18n elements and data-i18n-title attributes
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    el.title = t(el.dataset.i18nTitle);
+  });
+  // Update search placeholder
+  document.getElementById('cmd-input').placeholder = t('search.placeholder');
+  // Full re-render of dynamic content
+  renderAll();
+  updateConnStatus(ws && ws.readyState === WebSocket.OPEN);
+}
+
+// Init lang switcher
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('#langSwitch button').forEach(b => {
+    b.classList.toggle('active', b.dataset.lang === currentLang);
+    b.addEventListener('click', () => setLang(b.dataset.lang));
+  });
+  // Initial title update
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    el.title = t(el.dataset.i18nTitle);
+  });
+});
+
 // ============================================================
 // State
 // ============================================================
@@ -766,17 +1184,17 @@ const GRENADE_FIELDS = [
   'map_spots', 'grenade_background'
 ];
 
-// Features for dashboard (key, label, desc, icon SVG)
+// Features for dashboard (key, label_i18n, desc_i18n)
 const DASHBOARD_FEATURES = [
-  { key: 'bomb_timer', label: '炸弹计时器', desc: '显示 C4 爆炸倒计时' },
-  { key: 'bomb_label', label: '炸弹标签', desc: '显示炸弹位置标签' },
-  { key: 'spectators_list', label: '旁观者列表', desc: '显示谁在观看你' },
-  { key: 'valthrun_watermark', label: '水印', desc: '显示 FPS 和读数' },
-  { key: 'sniper_crosshair', label: '狙击准星', desc: '开镜时显示辅助准星' },
-  { key: 'aim_assist_recoil', label: '压枪辅助', desc: '自动压枪补偿' },
-  { key: 'hide_overlay_from_screen_capture', label: '防截屏', desc: '从屏幕捕获中隐藏覆盖层' },
-  { key: 'aim_silent', label: '静默自瞄', desc: '子弹追踪目标，视角无抖动' },
-  { key: 'render_debug_window', label: '调试窗口', desc: '显示 ImGui 调试信息' },
+  { key: 'bomb_timer', i18nLabel: 'features.bombTimer', i18nDesc: 'features.bombTimerDesc' },
+  { key: 'bomb_label', i18nLabel: 'features.bombLabel', i18nDesc: 'features.bombLabelDesc' },
+  { key: 'spectators_list', i18nLabel: 'features.spectatorsList', i18nDesc: 'features.spectatorsListDesc' },
+  { key: 'valthrun_watermark', i18nLabel: 'features.watermark', i18nDesc: 'features.watermarkDesc' },
+  { key: 'sniper_crosshair', i18nLabel: 'features.sniperCrosshair', i18nDesc: 'features.sniperCrosshairDesc' },
+  { key: 'aim_assist_recoil', i18nLabel: 'features.recoilControl', i18nDesc: 'features.recoilControlDesc' },
+  { key: 'hide_overlay_from_screen_capture', i18nLabel: 'features.antiScreenshot', i18nDesc: 'features.antiScreenshotDesc' },
+  { key: 'aim_silent', i18nLabel: 'features.silentAim', i18nDesc: 'features.silentAimDesc' },
+  { key: 'render_debug_window', i18nLabel: 'features.debugWindow', i18nDesc: 'features.debugWindowDesc' },
 ];
 
 // ESP types
@@ -865,10 +1283,10 @@ function updateConnStatus(connected) {
   const label = document.getElementById('connLabel');
   if (connected) {
     badge.className = 'conn-badge connected';
-    label.textContent = '已连接';
+    label.textContent = t('conn.connected');
   } else {
     badge.className = 'conn-badge';
-    label.textContent = '未连接';
+    label.textContent = t('conn.disconnected');
   }
 }
 
@@ -886,7 +1304,7 @@ function navigateTo(page) {
 // ============================================================
 async function loadSettings() {
   try { settings = await apiGet('/api/settings'); renderAll(); }
-  catch(e) { showToast('加载设置失败: ' + e.message, 'error'); }
+  catch(e) { showToast(t('toast.loadFailed') + ': ' + e.message, 'error'); }
 }
 
 async function loadEspConfigs() {
@@ -915,6 +1333,14 @@ function renderAll() {
   renderGeneralSettings();
   renderProfiles();
   updateFovCanvas();
+  // Refresh static i18n elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    el.title = t(el.dataset.i18nTitle);
+  });
+  document.getElementById('cmd-input').placeholder = t('search.placeholder');
 }
 
 function renderFeatureToggles() {
@@ -923,8 +1349,8 @@ function renderFeatureToggles() {
     const on = settings[f.key] === true;
     return `<div class="feature-card" onclick="toggleFeature('${f.key}')">
       <div class="info">
-        <div class="label">${f.label}</div>
-        <div class="desc">${f.desc}</div>
+        <div class="label">${t(f.i18nLabel)}</div>
+        <div class="desc">${t(f.i18nDesc)}</div>
       </div>
       <label class="toggle" onclick="event.stopPropagation()">
         <input type="checkbox" ${on ? 'checked' : ''} onchange="toggleFeature('${f.key}')">
@@ -939,10 +1365,11 @@ async function toggleFeature(key) {
   renderFeatureToggles();
   try {
     await apiPut('/api/settings', { [key]: settings[key] });
-    showToast(`${key} 已${settings[key] ? '开启' : '关闭'}`);
+    const label = t('features.' + key.replace(/_/g, ''));
+    const labelText = label !== 'features.' + key.replace(/_/g, '') ? label : key;
+    showToast(labelText + ' ' + t(settings[key] ? 'toast.toggleOn' : 'toast.toggleOff'));
   } catch(e) {
-    showToast('切换失败', 'error');
-    // Reload from server
+    showToast(t('toast.switchFailed'), 'error');
     loadSettings();
   }
 }
@@ -953,7 +1380,7 @@ async function toggleFeature(key) {
 function renderEspTree() {
   const c = document.getElementById('espTree');
   if (!espTreeData.length) {
-    c.innerHTML = '<div class="empty-state" style="padding:20px"><p>无配置</p></div>';
+    c.innerHTML = `<div class="empty-state" style="padding:20px"><p>${t('esp.noConfigs')}</p></div>`;
     return;
   }
   function walk(n, depth = 0) {
@@ -963,7 +1390,7 @@ function renderEspTree() {
     let h = `<div class="esp-node ${active?'active':''}" style="padding-left:${10+depth*14}px" onclick="selectEspKey('${n.key}')">
       <span class="dot ${dot}"></span>
       <span class="esp-label">${n.display}</span>
-      ${hasCfg ? '<span class="esp-badge">配置</span>' : ''}
+      ${hasCfg ? `<span class="esp-badge">${t('esp.config')}</span>` : ''}
     </div>`;
     if (n.children && n.children.length) h += n.children.map(ch => walk(ch, depth+1)).join('');
     return h;
@@ -980,7 +1407,7 @@ async function selectEspKey(key) {
   const bodyEl = document.getElementById('espConfigBody');
   if (!config || config.error) {
     titleEl.textContent = key;
-    bodyEl.innerHTML = '<p class="text-sm text-secondary">该节点没有详细配置</p>';
+    bodyEl.innerHTML = `<p class="text-sm text-secondary">${t('esp.noConfig')}</p>`;
     document.getElementById('espConfigEnabled').checked = false;
     return;
   }
@@ -1002,10 +1429,10 @@ function renderEspConfigForm(config) {
     case 'Player': html += renderPlayerForm(opts); break;
     case 'Chicken': html += renderChickenForm(opts); break;
     case 'Weapon': html += renderWeaponForm(opts); break;
-    default: html += `<p class="text-sm text-secondary">未知类型: ${type}</p>`;
+    default: html += `<p class="text-sm text-secondary">Unknown type: ${type}</p>`;
   }
   html += '</div>';
-  html += `<div class="mt-3"><button class="btn btn-primary w-full" onclick="saveCurrentEspConfig('${type}')">保存配置</button></div>`;
+  html += `<div class="mt-3"><button class="btn btn-primary w-full" onclick="saveCurrentEspConfig('${type}')">${t('esp.saveConfig')}</button></div>`;
   body.innerHTML = html;
 }
 
@@ -1014,64 +1441,63 @@ function espField(field, value) { espPendingChanges[field] = value; }
 function renderPlayerForm(o) {
   return `
     <div class="grid-2">
-      <div class="form-group"><label class="form-label">方框类型</label>
+      <div class="form-group"><label class="form-label">${t('esp.boxType')}</label>
         <select class="form-select" onchange="espField('box_type',this.value)">${ESP_BOX_TYPES.map(t => `<option ${o.box_type===t?'selected':''}>${t}</option>`).join('')}</select></div>
-      <div class="form-group"><label class="form-label">方框宽度</label>
+      <div class="form-group"><label class="form-label">${t('esp.boxWidth')}</label>
         <input class="form-input" type="number" step="0.5" value="${o.box_width??3}" onchange="espField('box_width',parseFloat(this.value))"></div>
     </div>
     <div class="grid-2">
-      <div class="form-group"><label class="form-label">骨骼</label>
+      <div class="form-group"><label class="form-label">${t('esp.skeleton')}</label>
         <label class="toggle"><input type="checkbox" ${o.skeleton?'checked':''} onchange="espField('skeleton',this.checked)"><span class="slider"></span></label></div>
-      <div class="form-group"><label class="form-label">骨骼宽度</label>
+      <div class="form-group"><label class="form-label">${t('esp.skeletonWidth')}</label>
         <input class="form-input" type="number" step="0.5" value="${o.skeleton_width??3}" onchange="espField('skeleton_width',parseFloat(this.value))"></div>
     </div>
-    <div class="form-group"><label class="form-label">血条</label>
+    <div class="form-group"><label class="form-label">${t('esp.healthBar')}</label>
       <select class="form-select" onchange="espField('health_bar',this.value)">${ESP_HEALTH_BARS.map(t => `<option ${o.health_bar===t?'selected':''}>${t}</option>`).join('')}</select></div>
-    <div class="form-group"><label class="form-label">跟踪线</label>
+    <div class="form-group"><label class="form-label">${t('esp.tracerLine')}</label>
       <select class="form-select" onchange="espField('tracer_lines',this.value)">${ESP_TRACE_POS.map(t => `<option ${o.tracer_lines===t?'selected':''}>${t}</option>`).join('')}</select></div>
-    <div class="form-group"><label class="form-label">头部标记</label>
+    <div class="form-group"><label class="form-label">${t('esp.headDot')}</label>
       <select class="form-select" onchange="espField('head_dot',this.value)">${ESP_HEAD_DOTS.map(t => `<option ${o.head_dot===t?'selected':''}>${t}</option>`).join('')}</select></div>
     <div class="grid-2">
-      <div class="form-group"><label class="form-label">显示名称</label><label class="toggle"><input type="checkbox" ${o.info_name?'checked':''} onchange="espField('info_name',this.checked)"><span class="slider"></span></label></div>
-      <div class="form-group"><label class="form-label">显示武器</label><label class="toggle"><input type="checkbox" ${o.info_weapon?'checked':''} onchange="espField('info_weapon',this.checked)"><span class="slider"></span></label></div>
+      <div class="form-group"><label class="form-label">${t('esp.showName')}</label><label class="toggle"><input type="checkbox" ${o.info_name?'checked':''} onchange="espField('info_name',this.checked)"><span class="slider"></span></label></div>
+      <div class="form-group"><label class="form-label">${t('esp.showWeapon')}</label><label class="toggle"><input type="checkbox" ${o.info_weapon?'checked':''} onchange="espField('info_weapon',this.checked)"><span class="slider"></span></label></div>
     </div>
     <div class="grid-2">
-      <div class="form-group"><label class="form-label">显示距离</label><label class="toggle"><input type="checkbox" ${o.info_distance?'checked':''} onchange="espField('info_distance',this.checked)"><span class="slider"></span></label></div>
-      <div class="form-group"><label class="form-label">血量文字</label><label class="toggle"><input type="checkbox" ${o.info_hp_text?'checked':''} onchange="espField('info_hp_text',this.checked)"><span class="slider"></span></label></div>
+      <div class="form-group"><label class="form-label">${t('esp.showDistance')}</label><label class="toggle"><input type="checkbox" ${o.info_distance?'checked':''} onchange="espField('info_distance',this.checked)"><span class="slider"></span></label></div>
+      <div class="form-group"><label class="form-label">${t('esp.hpText')}</label><label class="toggle"><input type="checkbox" ${o.info_hp_text?'checked':''} onchange="espField('info_hp_text',this.checked)"><span class="slider"></span></label></div>
     </div>
     <div class="grid-2">
-      <div class="form-group"><label class="form-label">显示弹药</label><label class="toggle"><input type="checkbox" ${o.info_ammo?'checked':''} onchange="espField('info_ammo',this.checked)"><span class="slider"></span></label></div>
-      <div class="form-group"><label class="form-label">显示投掷物</label><label class="toggle"><input type="checkbox" ${o.info_grenades?'checked':''} onchange="espField('info_grenades',this.checked)"><span class="slider"></span></label></div>
+      <div class="form-group"><label class="form-label">${t('esp.showAmmo')}</label><label class="toggle"><input type="checkbox" ${o.info_ammo?'checked':''} onchange="espField('info_ammo',this.checked)"><span class="slider"></span></label></div>
+      <div class="form-group"><label class="form-label">${t('esp.showGrenades')}</label><label class="toggle"><input type="checkbox" ${o.info_grenades?'checked':''} onchange="espField('info_grenades',this.checked)"><span class="slider"></span></label></div>
     </div>
     <div class="grid-2">
-      <div class="form-group"><label class="form-label">显示状态</label><label class="toggle"><input type="checkbox" ${o.info_flag_bomb||o.info_flag_scoped||o.info_flag_flashed||o.info_flag_kit?'checked':''} onchange="const v=this.checked;espField('info_flag_bomb',v);espField('info_flag_scoped',v);espField('info_flag_flashed',v);espField('info_flag_kit',v)"><span class="slider"></span></label></div>
-      <div class="form-group"><label class="form-label">屏外箭头</label><label class="toggle"><input type="checkbox" ${o.offscreen_arrows?'checked':''} onchange="espField('offscreen_arrows',this.checked)"><span class="slider"></span></label></div>
+      <div class="form-group"><label class="form-label">${t('esp.showFlags')}</label><label class="toggle"><input type="checkbox" ${o.info_flag_bomb||o.info_flag_scoped||o.info_flag_flashed||o.info_flag_kit?'checked':''} onchange="const v=this.checked;espField('info_flag_bomb',v);espField('info_flag_scoped',v);espField('info_flag_flashed',v);espField('info_flag_kit',v)"><span class="slider"></span></label></div>
+      <div class="form-group"><label class="form-label">${t('esp.offscreenArrows')}</label><label class="toggle"><input type="checkbox" ${o.offscreen_arrows?'checked':''} onchange="espField('offscreen_arrows',this.checked)"><span class="slider"></span></label></div>
     </div>
     <div class="grid-2">
-      <div class="form-group"><label class="form-label">附近玩家检测</label><label class="toggle"><input type="checkbox" ${o.near_players?'checked':''} onchange="espField('near_players',this.checked)"><span class="slider"></span></label></div>
-      <div class="form-group"><label class="form-label">检测距离</label><input class="form-input" type="number" step="1" value="${o.near_players_distance??20}" onchange="espField('near_players_distance',parseFloat(this.value))"></div>
+      <div class="form-group"><label class="form-label">${t('esp.nearPlayers')}</label><label class="toggle"><input type="checkbox" ${o.near_players?'checked':''} onchange="espField('near_players',this.checked)"><span class="slider"></span></label></div>
+      <div class="form-group"><label class="form-label">${t('esp.detectDistance')}</label><input class="form-input" type="number" step="1" value="${o.near_players_distance??20}" onchange="espField('near_players_distance',parseFloat(this.value))"></div>
     </div>`;
 }
 
 function renderChickenForm(o) {
   return `
     <div class="grid-2">
-      <div class="form-group"><label class="form-label">方框类型</label>
+      <div class="form-group"><label class="form-label">${t('esp.boxType')}</label>
         <select class="form-select" onchange="espField('box_type',this.value)">${ESP_BOX_TYPES.map(t => `<option ${o.box_type===t?'selected':''}>${t}</option>`).join('')}</select></div>
-      <div class="form-group"><label class="form-label">骨骼</label><label class="toggle"><input type="checkbox" ${o.skeleton?'checked':''} onchange="espField('skeleton',this.checked)"><span class="slider"></span></label></div>
+      <div class="form-group"><label class="form-label">${t('esp.skeleton')}</label><label class="toggle"><input type="checkbox" ${o.skeleton?'checked':''} onchange="espField('skeleton',this.checked)"><span class="slider"></span></label></div>
     </div>
-    <div class="form-group"><label class="form-label">显示所属玩家</label><label class="toggle"><input type="checkbox" ${o.info_owner?'checked':''} onchange="espField('info_owner',this.checked)"><span class="slider"></span></label></div>`;
+    <div class="form-group"><label class="form-label">${t('esp.showOwner')}</label><label class="toggle"><input type="checkbox" ${o.info_owner?'checked':''} onchange="espField('info_owner',this.checked)"><span class="slider"></span></label></div>`;
 }
 
 function renderWeaponForm(o) {
   return `
-    <div class="form-group"><label class="form-label">绘制方框</label><label class="toggle"><input type="checkbox" ${o.draw_box?'checked':''} onchange="espField('draw_box',this.checked)"><span class="slider"></span></label></div>
-    <div class="form-group"><label class="form-label">显示名称</label><label class="toggle"><input type="checkbox" ${o.info_name?'checked':''} onchange="espField('info_name',this.checked)"><span class="slider"></span></label></div>`;
+    <div class="form-group"><label class="form-label">${t('esp.drawBox')}</label><label class="toggle"><input type="checkbox" ${o.draw_box?'checked':''} onchange="espField('draw_box',this.checked)"><span class="slider"></span></label></div>
+    <div class="form-group"><label class="form-label">${t('esp.showName')}</label><label class="toggle"><input type="checkbox" ${o.info_name?'checked':''} onchange="espField('info_name',this.checked)"><span class="slider"></span></label></div>`;
 }
 
 async function saveCurrentEspConfig(type) {
   if (!selectedEspKey) return;
-  // Merge pending changes with current config
   const cur = espConfigs[selectedEspKey] || {};
   const merged = {};
   for (const [k,v] of Object.entries(cur)) {
@@ -1082,16 +1508,19 @@ async function saveCurrentEspConfig(type) {
   try {
     await apiPut(`/api/esp-config/${encodeURIComponent(selectedEspKey)}`, merged);
     espPendingChanges = {};
-    showToast('ESP 配置已保存');
+    showToast(t('toast.espConfigSaved'));
     loadEspConfigs();
-  } catch(e) { showToast('保存失败: ' + e.message, 'error'); }
+  } catch(e) { showToast(t('toast.espConfigSaveFailed') + ': ' + e.message, 'error'); }
 }
 
 async function toggleEspConfigEnabled() {
   if (!selectedEspKey) return;
   const en = document.getElementById('espConfigEnabled').checked;
-  try { await apiPut(`/api/esp-config/${encodeURIComponent(selectedEspKey)}`, { enabled: en }); showToast(en?'已启用':'已禁用'); loadEspConfigs(); }
-  catch(e) { showToast('切换失败', 'error'); }
+  try {
+    await apiPut(`/api/esp-config/${encodeURIComponent(selectedEspKey)}`, { enabled: en });
+    showToast(en ? t('toast.enabled') : t('toast.disabled'));
+    loadEspConfigs();
+  } catch(e) { showToast(t('toast.switchFailed'), 'error'); }
 }
 
 // ============================================================
@@ -1099,18 +1528,18 @@ async function toggleEspConfigEnabled() {
 // ============================================================
 function renderTriggerbotSettings() {
   document.getElementById('triggerbotSettings').innerHTML = `
-    <div class="form-group"><label class="form-label">模式</label>
+    <div class="form-group"><label class="form-label">${t('trigger.mode')}</label>
       <select class="form-select" onchange="updateSetting('trigger_bot_mode',this.value)">${KEY_TOGGLE_MODES.map(m => `<option ${settings.trigger_bot_mode===m?'selected':''}>${m}</option>`).join('')}</select></div>
-    <div class="form-group"><label class="form-label">队友检测</label><label class="toggle"><input type="checkbox" ${settings.trigger_bot_team_check?'checked':''} onchange="updateAndSave('trigger_bot_team_check',this.checked)"><span class="slider"></span></label></div>
-    <div class="form-group"><label class="form-label">延迟后重新检测</label><label class="toggle"><input type="checkbox" ${settings.trigger_bot_check_target_after_delay?'checked':''} onchange="updateAndSave('trigger_bot_check_target_after_delay',this.checked)"><span class="slider"></span></label></div>
-    <div class="form-group"><label class="form-label">快捷键</label>
+    <div class="form-group"><label class="form-label">${t('trigger.teamCheck')}</label><label class="toggle"><input type="checkbox" ${settings.trigger_bot_team_check?'checked':''} onchange="updateAndSave('trigger_bot_team_check',this.checked)"><span class="slider"></span></label></div>
+    <div class="form-group"><label class="form-label">${t('trigger.checkAfterDelay')}</label><label class="toggle"><input type="checkbox" ${settings.trigger_bot_check_target_after_delay?'checked':''} onchange="updateAndSave('trigger_bot_check_target_after_delay',this.checked)"><span class="slider"></span></label></div>
+    <div class="form-group"><label class="form-label">${t('trigger.hotkey')}</label>
       ${renderKeyRecorder('key_trigger_bot')}</div>`;
   document.getElementById('triggerbotDelaySettings').innerHTML = `
-    <div class="form-group"><label class="form-label">最小延迟 (ms)</label>
+    <div class="form-group"><label class="form-label">${t('trigger.minDelay')}</label>
       <input class="form-input" type="number" min="0" value="${settings.trigger_bot_delay_min??10}" onchange="updateAndSave('trigger_bot_delay_min',parseInt(this.value)||0)"></div>
-    <div class="form-group"><label class="form-label">最大延迟 (ms)</label>
+    <div class="form-group"><label class="form-label">${t('trigger.maxDelay')}</label>
       <input class="form-input" type="number" min="0" value="${settings.trigger_bot_delay_max??20}" onchange="updateAndSave('trigger_bot_delay_max',parseInt(this.value)||0)"></div>
-    <div class="form-group"><label class="form-label">射击持续时间 (ms)</label>
+    <div class="form-group"><label class="form-label">${t('trigger.shotDuration')}</label>
       <input class="form-input" type="number" min="0" value="${settings.trigger_bot_shot_duration??400}" onchange="updateAndSave('trigger_bot_shot_duration',parseInt(this.value)||0)"></div>`;
 }
 
@@ -1120,17 +1549,18 @@ function renderTriggerbotSettings() {
 function renderSilentAimSettings() {
   const fov = settings.aim_silent_fov ?? 5;
   document.getElementById('silentAimSettings').innerHTML = `
-    <div class="form-group"><label class="form-label">启用静默自瞄</label><label class="toggle"><input type="checkbox" ${settings.aim_silent?'checked':''} onchange="updateAndSave('aim_silent',this.checked)"><span class="slider"></span></label></div>
-    <div class="form-group"><label class="form-label">FOV</label>
+    <div class="form-group"><label class="form-label">${t('silentaim.enable')}</label><label class="toggle"><input type="checkbox" ${settings.aim_silent?'checked':''} onchange="updateAndSave('aim_silent',this.checked)"><span class="slider"></span></label></div>
+    <div class="form-group"><label class="form-label">${t('silentaim.fov')}</label>
       <div class="range-group">
         <input type="range" min="0.5" max="180" step="0.5" value="${fov}" oninput="updateFov(this.value);updateAndSave('aim_silent_fov',parseFloat(this.value))">
         <span class="range-value" id="fovSliderVal">${fov}</span>
       </div>
     </div>
-    <div class="form-group"><label class="form-label">队友检测</label><label class="toggle"><input type="checkbox" ${settings.aim_silent_team_check!==false?'checked':''} onchange="updateAndSave('aim_silent_team_check',this.checked)"><span class="slider"></span></label></div>
-    <div class="form-group"><label class="form-label">自动开枪</label><label class="toggle"><input type="checkbox" ${settings.aim_silent_auto_shoot?'checked':''} onchange="updateAndSave('aim_silent_auto_shoot',this.checked)"><span class="slider"></span></label></div>
-    <div class="form-group"><label class="form-label">快捷键</label>
+    <div class="form-group"><label class="form-label">${t('silentaim.teamCheck')}</label><label class="toggle"><input type="checkbox" ${settings.aim_silent_team_check!==false?'checked':''} onchange="updateAndSave('aim_silent_team_check',this.checked)"><span class="slider"></span></label></div>
+    <div class="form-group"><label class="form-label">${t('silentaim.autoShoot')}</label><label class="toggle"><input type="checkbox" ${settings.aim_silent_auto_shoot?'checked':''} onchange="updateAndSave('aim_silent_auto_shoot',this.checked)"><span class="slider"></span></label></div>
+    <div class="form-group"><label class="form-label">${t('silentaim.hotkey')}</label>
       ${renderKeyRecorder('aim_silent_hotkey')}</div>`;
+  document.getElementById('fovDisplay').textContent = fov;
 }
 
 function updateFov(val) {
@@ -1199,27 +1629,27 @@ function setGh(key, value) {
 function renderGrenadeSettings() {
   const sortOrders = ['Alphabetical', 'AlphabeticalReverse'];
   document.getElementById('grenadeSettings').innerHTML = `
-    <div class="form-group"><label class="form-label">启用投掷物助手</label><label class="toggle"><input type="checkbox" ${gh('active',true)?'checked':''} onchange="setGh('active',this.checked);saveSettingsImmediate()"><span class="slider"></span></label></div>
-    <div class="form-group"><label class="form-label">排序方式</label>
+    <div class="form-group"><label class="form-label">${t('grenade.enable')}</label><label class="toggle"><input type="checkbox" ${gh('active',true)?'checked':''} onchange="setGh('active',this.checked);saveSettingsImmediate()"><span class="slider"></span></label></div>
+    <div class="form-group"><label class="form-label">${t('grenade.sortOrder')}</label>
       <select class="form-select" onchange="setGh('ui_sort_order',this.value);saveSettingsImmediate()">${sortOrders.map(s => `<option ${gh('ui_sort_order')===s?'selected':''}>${s}</option>`).join('')}</select></div>
-    <div class="form-group"><label class="form-label">投掷点背景</label><label class="toggle"><input type="checkbox" ${gh('grenade_background',true)?'checked':''} onchange="setGh('grenade_background',this.checked);saveSettingsImmediate()"><span class="slider"></span></label></div>
+    <div class="form-group"><label class="form-label">${t('grenade.spotBackground')}</label><label class="toggle"><input type="checkbox" ${gh('grenade_background',true)?'checked':''} onchange="setGh('grenade_background',this.checked);saveSettingsImmediate()"><span class="slider"></span></label></div>
     <div class="grid-2">
-      <div class="form-group"><label class="form-label">圆圈距离</label><input class="form-input" type="number" step="1" value="${gh('circle_distance',150)}" onchange="setGh('circle_distance',parseFloat(this.value));saveSettingsImmediate()"></div>
-      <div class="form-group"><label class="form-label">圆圈半径</label><input class="form-input" type="number" step="1" value="${gh('circle_radius',20)}" onchange="setGh('circle_radius',parseFloat(this.value));saveSettingsImmediate()"></div>
+      <div class="form-group"><label class="form-label">${t('grenade.circleDistance')}</label><input class="form-input" type="number" step="1" value="${gh('circle_distance',150)}" onchange="setGh('circle_distance',parseFloat(this.value));saveSettingsImmediate()"></div>
+      <div class="form-group"><label class="form-label">${t('grenade.circleRadius')}</label><input class="form-input" type="number" step="1" value="${gh('circle_radius',20)}" onchange="setGh('circle_radius',parseFloat(this.value));saveSettingsImmediate()"></div>
     </div>
-    <div class="form-group"><label class="form-label">圆圈分段数</label><input class="form-input" type="number" min="3" value="${gh('circle_segments',32)}" onchange="setGh('circle_segments',parseInt(this.value)||32);saveSettingsImmediate()"></div>`;
+    <div class="form-group"><label class="form-label">${t('grenade.circleSegments')}</label><input class="form-input" type="number" min="3" value="${gh('circle_segments',32)}" onchange="setGh('circle_segments',parseInt(this.value)||32);saveSettingsImmediate()"></div>`;
 
   const colorFields = [
-    {key:'color_position', label:'位置颜色'},
-    {key:'color_position_active', label:'位置激活'},
-    {key:'color_angle', label:'角度颜色'},
-    {key:'color_angle_active', label:'角度激活'}
+    {key:'color_position', i18nLabel:'grenade.colorPosition'},
+    {key:'color_position_active', i18nLabel:'grenade.colorPositionActive'},
+    {key:'color_angle', i18nLabel:'grenade.colorAngle'},
+    {key:'color_angle_active', i18nLabel:'grenade.colorAngleActive'}
   ];
   document.getElementById('grenadeColorSettings').innerHTML = colorFields.map(f => {
     const rgba = gh(f.key, [1,1,1,1]);
     const hex = rgbaToHex(rgba);
     return `<div class="form-group">
-      <label class="form-label">${f.label}</label>
+      <label class="form-label">${t(f.i18nLabel)}</label>
       <div class="color-row">
         <div class="color-swatch" style="background:${hex}">
           <input type="color" value="${hex}" onchange="onGhColorChange('${f.key}',this.value)">
@@ -1244,7 +1674,6 @@ function onGhAlphaChange(field, alpha, slider) {
   cur[3] = alpha;
   setGh(field, cur);
   slider.parentElement.querySelector('.text-xs').textContent = Math.round(alpha*100) + '%';
-  // Update swatch background
   const swatch = slider.parentElement.querySelector('.color-swatch');
   if (swatch) swatch.style.background = `rgba(${Math.round(cur[0]*255)},${Math.round(cur[1]*255)},${Math.round(cur[2]*255)},${alpha})`;
   saveSettingsImmediate();
@@ -1255,21 +1684,21 @@ function onGhAlphaChange(field, alpha, slider) {
 // ============================================================
 function renderGeneralSettings() {
   document.getElementById('generalKeySettings').innerHTML = `
-    <div class="form-group"><label class="form-label">ESP 模式</label>
+    <div class="form-group"><label class="form-label">${t('general.espMode')}</label>
       <select class="form-select" onchange="updateAndSave('esp_mode',this.value)">${KEY_TOGGLE_MODES.map(m => `<option ${settings.esp_mode===m?'selected':''}>${m}</option>`).join('')}</select></div>
-    <div class="form-group"><label class="form-label">ESP 快捷键</label>
+    <div class="form-group"><label class="form-label">${t('general.espHotkey')}</label>
       ${renderKeyRecorder('esp_toggle')}</div>
-    <div class="form-group"><label class="form-label">压枪辅助</label><label class="toggle"><input type="checkbox" ${settings.aim_assist_recoil?'checked':''} onchange="updateAndSave('aim_assist_recoil',this.checked)"><span class="slider"></span></label></div>
-    <div class="form-group"><label class="form-label">最小压枪子弹数</label>
+    <div class="form-group"><label class="form-label">${t('general.recoilControl')}</label><label class="toggle"><input type="checkbox" ${settings.aim_assist_recoil?'checked':''} onchange="updateAndSave('aim_assist_recoil',this.checked)"><span class="slider"></span></label></div>
+    <div class="form-group"><label class="form-label">${t('general.minRecoilBullets')}</label>
       <input class="form-input" type="number" min="1" value="${settings.aim_assist_recoil_min_bullets??1}" onchange="updateAndSave('aim_assist_recoil_min_bullets',parseInt(this.value)||1)"></div>`;
 
   document.getElementById('generalOtherSettings').innerHTML = `
-    <div class="form-group"><label class="form-label">鼠标 360° 像素</label>
+    <div class="form-group"><label class="form-label">${t('general.mouse360')}</label>
       <input class="form-input" type="number" value="${settings.mouse_x_360??16364}" onchange="updateAndSave('mouse_x_360',parseInt(this.value)||16364)"></div>
-    <div class="form-group"><label class="form-label">防截屏</label><label class="toggle"><input type="checkbox" ${settings.hide_overlay_from_screen_capture?'checked':''} onchange="updateAndSave('hide_overlay_from_screen_capture',this.checked)"><span class="slider"></span></label></div>
-    <div class="form-group"><label class="form-label">调试窗口</label><label class="toggle"><input type="checkbox" ${settings.render_debug_window?'checked':''} onchange="updateAndSave('render_debug_window',this.checked)"><span class="slider"></span></label></div>
-    <div class="form-group"><label class="form-label">遥测</label><label class="toggle"><input type="checkbox" ${settings.metrics!==false?'checked':''} onchange="updateAndSave('metrics',this.checked)"><span class="slider"></span></label></div>
-    <div class="form-group"><label class="form-label">雷达 URL</label>
+    <div class="form-group"><label class="form-label">${t('general.antiScreenshot')}</label><label class="toggle"><input type="checkbox" ${settings.hide_overlay_from_screen_capture?'checked':''} onchange="updateAndSave('hide_overlay_from_screen_capture',this.checked)"><span class="slider"></span></label></div>
+    <div class="form-group"><label class="form-label">${t('general.debugWindow')}</label><label class="toggle"><input type="checkbox" ${settings.render_debug_window?'checked':''} onchange="updateAndSave('render_debug_window',this.checked)"><span class="slider"></span></label></div>
+    <div class="form-group"><label class="form-label">${t('general.telemetry')}</label><label class="toggle"><input type="checkbox" ${settings.metrics!==false?'checked':''} onchange="updateAndSave('metrics',this.checked)"><span class="slider"></span></label></div>
+    <div class="form-group"><label class="form-label">${t('general.radarUrl')}</label>
       <input class="form-input" type="text" placeholder="https://..." value="${settings.web_radar_url||''}" onchange="updateAndSave('web_radar_url',this.value||null)"></div>`;
 }
 
@@ -1280,9 +1709,9 @@ function renderKeyRecorder(key) {
   const val = settings[key];
   const bound = val ? val : null;
   return `<div class="key-recorder">
-    <span class="key-badge ${bound?'bound':''}">${bound ? formatKeyName(bound) : '未绑定'}</span>
-    <button class="btn btn-ghost btn-xs" onclick="startKeyRecording('${key}')">录制</button>
-    ${bound ? `<button class="btn btn-ghost btn-xs" onclick="clearKey('${key}')">清除</button>` : ''}
+    <span class="key-badge ${bound?'bound':''}">${bound ? formatKeyName(bound) : t('key.unbound')}</span>
+    <button class="btn btn-ghost btn-xs" onclick="startKeyRecording('${key}')">${t('key.record')}</button>
+    ${bound ? `<button class="btn btn-ghost btn-xs" onclick="clearKey('${key}')">${t('key.clear')}</button>` : ''}
   </div>`;
 }
 
@@ -1304,10 +1733,10 @@ function formatKeyName(key) {
 }
 
 function startKeyRecording(key) {
-  showModal('录制快捷键', `
-    <p class="text-sm text-secondary" style="margin-bottom:12px">请按下你想要绑定的按键...</p>
+  showModal(t('key.recordTitle'), `
+    <p class="text-sm text-secondary" style="margin-bottom:12px">${t('key.recordDesc')}</p>
     <div style="text-align:center;padding:20px;background:rgba(0,0,0,0.3);border-radius:8px;border:1px solid var(--border)">
-      <span style="font-size:24px;font-weight:700;color:var(--accent)" id="recordingKeyText">等待输入...</span>
+      <span style="font-size:24px;font-weight:700;color:var(--accent)" id="recordingKeyText">${t('key.waitingInput')}</span>
     </div>
   `, []);
   const handler = (e) => {
@@ -1328,16 +1757,14 @@ function startKeyRecording(key) {
       settings[key] = keyName;
       closeModal();
       saveSettingsImmediate();
-      // Re-render affected page
       if (key.startsWith('aim_')) renderSilentAimSettings();
       else if (key.startsWith('key_trigger') || key.startsWith('trigger_')) renderTriggerbotSettings();
       else renderGeneralSettings();
-      showToast(`已绑定: ${formatKeyName(keyName)}`);
+      showToast(t('toast.keyBound') + ': ' + formatKeyName(keyName));
     }
   };
   document.addEventListener('keydown', handler, true);
   document.addEventListener('mousedown', handler, true);
-  // Store handler reference for cleanup on modal close
   window._recordingHandler = handler;
 }
 
@@ -1347,7 +1774,7 @@ function clearKey(key) {
   if (key.startsWith('aim_')) renderSilentAimSettings();
   else if (key.startsWith('key_trigger') || key.startsWith('trigger_')) renderTriggerbotSettings();
   else renderGeneralSettings();
-  showToast('已清除快捷键');
+  showToast(t('toast.keyCleared'));
 }
 
 // ============================================================
@@ -1374,7 +1801,7 @@ async function saveSettingsImmediate() {
   try {
     await apiPut('/api/settings', settings);
   } catch(e) {
-    showToast('保存失败: ' + e.message, 'error');
+    showToast(t('toast.saveFailed') + ': ' + e.message, 'error');
   }
 }
 
@@ -1382,9 +1809,9 @@ async function saveSettingsToDisk() {
   try {
     await saveSettingsImmediate();
     await apiGet('/api/settings/save');
-    showToast('设置已保存到磁盘');
+    showToast(t('toast.settingsSaved'));
   } catch(e) {
-    showToast('保存失败: ' + e.message, 'error');
+    showToast(t('toast.saveFailed') + ': ' + e.message, 'error');
   }
 }
 
@@ -1402,7 +1829,7 @@ function renderProfiles() {
   const sel = document.getElementById('profileSelect');
   const profiles = getProfiles();
   const active = localStorage.getItem(ACTIVE_PROFILE_KEY) || 'Default';
-  let html = '<option value="">配置...</option>';
+  let html = `<option value="">${t('profile.placeholder')}</option>`;
   for (const name of Object.keys(profiles)) {
     html += `<option value="${name}" ${name===active?'selected':''}>${name}</option>`;
   }
@@ -1412,36 +1839,34 @@ function renderProfiles() {
 function loadProfile(name) {
   if (!name) return;
   const profiles = getProfiles();
-  if (!profiles[name]) { showToast('配置不存在', 'error'); return; }
-  // Apply all settings from profile
+  if (!profiles[name]) { showToast(t('toast.configNotFound'), 'error'); return; }
   const merged = { ...settings, ...profiles[name] };
-  // Preserve esp_settings and esp_settings_enabled from profile
   if (profiles[name].esp_settings) merged.esp_settings = profiles[name].esp_settings;
   if (profiles[name].esp_settings_enabled) merged.esp_settings_enabled = profiles[name].esp_settings_enabled;
   Object.assign(settings, merged);
   localStorage.setItem(ACTIVE_PROFILE_KEY, name);
   saveSettingsImmediate();
   renderAll();
-  showToast(`已加载配置: ${name}`);
+  showToast(t('toast.configLoaded') + ': ' + name);
 }
 
 function saveProfile() {
-  showModal('保存配置', `
-    <div class="form-group"><label class="form-label">配置名称</label>
-      <input class="form-input" id="profileNameInput" type="text" placeholder="例如: Competitive" value=""></div>
-    <p class="text-xs text-secondary">当前所有设置将保存到此配置中</p>
+  showModal(t('profile.saveTitle'), `
+    <div class="form-group"><label class="form-label">${t('profile.saveName')}</label>
+      <input class="form-input" id="profileNameInput" type="text" placeholder="${t('profile.saveHint')}" value=""></div>
+    <p class="text-xs text-secondary">${t('profile.saveDesc')}</p>
   `, [
-    { label: '取消', class: 'btn-ghost', action: closeModal },
-    { label: '保存', class: 'btn-primary', action: () => {
+    { label: t('profile.cancel'), class: 'btn-ghost', action: closeModal },
+    { label: t('profile.save'), class: 'btn-primary', action: () => {
       const name = document.getElementById('profileNameInput').value.trim();
-      if (!name) { showToast('请输入名称', 'error'); return; }
+      if (!name) { showToast(t('profile.saveName') + ' required', 'error'); return; }
       const profiles = getProfiles();
       profiles[name] = JSON.parse(JSON.stringify(settings));
       localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
       localStorage.setItem(ACTIVE_PROFILE_KEY, name);
       renderProfiles();
       closeModal();
-      showToast(`配置已保存: ${name}`);
+      showToast(t('toast.configSaved') + ': ' + name);
     }}
   ]);
   setTimeout(() => {
@@ -1453,19 +1878,21 @@ function saveProfile() {
 function deleteCurrentProfile() {
   const active = localStorage.getItem(ACTIVE_PROFILE_KEY);
   if (!active || active === 'Default' && !getProfiles()['Default']) {
-    showToast('没有可删除的配置', 'warning');
+    showToast(t('toast.noConfigToDelete'), 'warning');
     return;
   }
-  showModal('删除配置', `<p class="text-sm text-secondary">确定要删除配置 "<strong>${active}</strong>" 吗？</p>`, [
-    { label: '取消', class: 'btn-ghost', action: closeModal },
-    { label: '删除', class: 'btn-danger', action: () => {
+  showModal(t('profile.deleteTitle'),
+    `<p class="text-sm text-secondary">${t('profile.deleteConfirm', active)}</p>`,
+  [
+    { label: t('profile.cancel'), class: 'btn-ghost', action: closeModal },
+    { label: t('profile.delete'), class: 'btn-danger', action: () => {
       const profiles = getProfiles();
       delete profiles[active];
       localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
       localStorage.removeItem(ACTIVE_PROFILE_KEY);
       renderProfiles();
       closeModal();
-      showToast(`已删除: ${active}`);
+      showToast(t('toast.configDeleted') + ': ' + active);
     }}
   ]);
 }
@@ -1480,7 +1907,7 @@ function exportSettings() {
   a.href = url; a.download = `louismod-settings-${new Date().toISOString().slice(0,10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
-  showToast('设置已导出');
+  showToast(t('toast.settingsExported'));
 }
 
 function importSettings() {
@@ -1497,9 +1924,9 @@ function handleImport(e) {
       Object.assign(settings, imported);
       saveSettingsImmediate();
       renderAll();
-      showToast('设置已导入');
+      showToast(t('toast.settingsImported'));
     } catch(err) {
-      showToast('导入失败: ' + err.message, 'error');
+      showToast(t('toast.importFailed') + ': ' + err.message, 'error');
     }
   };
   reader.readAsText(file);
@@ -1513,24 +1940,24 @@ function buildCmdItems() {
   const items = [];
   // Pages
   const pages = [
-    { id: 'dashboard', label: '仪表盘', icon: '<rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/>' },
-    { id: 'esp', label: 'ESP 配置', icon: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>' },
-    { id: 'triggerbot', label: '扳机辅助', icon: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>' },
-    { id: 'silentaim', label: '静默自瞄', icon: '<circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>' },
-    { id: 'grenade', label: '投掷物助手', icon: '<circle cx="12" cy="12" r="8"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/><circle cx="12" cy="12" r="3"/>' },
-    { id: 'general', label: '通用设置', icon: '<circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2"/>' },
+    { id: 'dashboard', i18n: 'nav.dashboard', icon: '<rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/>' },
+    { id: 'esp', i18n: 'nav.esp', icon: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>' },
+    { id: 'triggerbot', i18n: 'nav.triggerbot', icon: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>' },
+    { id: 'silentaim', i18n: 'nav.silentaim', icon: '<circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>' },
+    { id: 'grenade', i18n: 'nav.grenade', icon: '<circle cx="12" cy="12" r="8"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/><circle cx="12" cy="12" r="3"/>' },
+    { id: 'general', i18n: 'nav.general', icon: '<circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2"/>' },
   ];
   for (const p of pages) {
-    items.push({ type: 'page', label: p.label, page: p.id, icon: p.icon, path: '导航' });
+    items.push({ type: 'page', label: t(p.i18n), page: p.id, icon: p.icon, path: t('cmd.navigate') });
   }
   // Feature toggles
   for (const f of DASHBOARD_FEATURES) {
-    items.push({ type: 'toggle', label: f.label, key: f.key, icon: '<path d="M9 12l2 2 4-4"/>', path: settings[f.key] ? '已开启' : '已关闭' });
+    items.push({ type: 'toggle', label: t(f.i18nLabel), key: f.key, icon: '<path d="M9 12l2 2 4-4"/>', path: settings[f.key] ? t('cmd.enabled') : t('cmd.disabled') });
   }
   // Settings
-  items.push({ type: 'action', label: '保存设置到磁盘', action: 'save', icon: '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>', path: '' });
-  items.push({ type: 'action', label: '导出设置 JSON', action: 'export', icon: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>', path: '' });
-  items.push({ type: 'action', label: '导入设置 JSON', action: 'import', icon: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>', path: '' });
+  items.push({ type: 'action', label: t('cmd.saveToDisk'), action: 'save', icon: '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>', path: '' });
+  items.push({ type: 'action', label: t('cmd.exportJson'), action: 'export', icon: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>', path: '' });
+  items.push({ type: 'action', label: t('cmd.importJson'), action: 'import', icon: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>', path: '' });
   return items;
 }
 
@@ -1538,6 +1965,7 @@ function openCmd() {
   cmdItems = buildCmdItems();
   document.getElementById('cmd-overlay').classList.add('open');
   document.getElementById('cmd-input').value = '';
+  document.getElementById('cmd-input').placeholder = t('search.placeholder');
   document.getElementById('cmd-input').focus();
   cmdSelectedIdx = -1;
   filterCmd();
@@ -1560,7 +1988,6 @@ function filterCmd() {
     </div>`;
   }).join('');
   cmdSelectedIdx = filtered.length > 0 ? Math.min(cmdSelectedIdx, filtered.length - 1) : -1;
-  // Update cmdItems order to match filtered
   cmdItems = cmdItems.filter(i => i.label.toLowerCase().includes(q));
 }
 
@@ -1602,7 +2029,6 @@ function showModal(title, bodyHTML, buttons) {
 
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
-  // Cleanup any recording handlers
   if (window._recordingHandler) {
     document.removeEventListener('keydown', window._recordingHandler, true);
     document.removeEventListener('mousedown', window._recordingHandler, true);
@@ -1637,6 +2063,15 @@ document.addEventListener('keydown', e => {
 // ============================================================
 // Init
 // ============================================================
+// Init lang switcher buttons
+document.querySelectorAll('#langSwitch button').forEach(b => {
+  b.classList.toggle('active', b.dataset.lang === currentLang);
+  b.addEventListener('click', () => setLang(b.dataset.lang));
+});
+document.querySelectorAll('[data-i18n-title]').forEach(el => {
+  el.title = t(el.dataset.i18nTitle);
+});
+
 connectWs();
 loadSettings();
 </script>

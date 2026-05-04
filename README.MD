@@ -145,6 +145,47 @@ cargo build --release -p controller
 
 > No driver needed for VAC-protected official matchmaking. / 官匹无需驱动。
 
+---
+
+## Download & Run (No Build) / 下载即用（无需构建）
+
+### 1. Download / 下载
+
+Go to [GitHub Releases](https://github.com/KongBai1145/LouisMod/releases) and download the latest `controller.exe`.
+
+前往 [GitHub Releases](https://github.com/KongBai1145/LouisMod/releases) 下载最新 `controller.exe`。
+
+### 2. Run / 运行
+
+Double-click `controller.exe`. The program will:
+- Auto-detect whether the kernel driver is loaded
+- Fall back to user-mode indirect syscalls if no driver (sufficient for VAC)
+- Start the web control panel on port `16384`
+
+双击 `controller.exe` 即可运行。程序会：
+- 自动检测内核驱动是否已加载
+- 无驱动时自动回退用户态间接 syscall（对 VAC 足够安全）
+- 在端口 `16384` 启动 Web 控制面板
+
+### 3. Open Control Panel / 打开控制面板
+
+```
+http://localhost:16384
+```
+
+- Toggle features on the Dashboard / 在仪表盘开关功能
+- Configure ESP, Trigger Bot, Silent Aim / 配置 ESP、扳机、静默自瞄
+- Save/load profiles via localStorage / 通过 localStorage 保存/加载配置
+- Press `Ctrl+K` for command palette / 按 `Ctrl+K` 打开命令面板
+
+### 4. Stop / 停止
+
+Close the console window or press `Ctrl+C` in the terminal.
+
+关闭控制台窗口或在终端按 `Ctrl+C`。
+
+---
+
 ### Optional: Kernel Driver / 可选：安装内核驱动
 
 For Faceit/ESEA or maximum stealth / 针对第三方反作弊或最强隐匿：
