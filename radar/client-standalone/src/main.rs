@@ -99,7 +99,7 @@ async fn real_main(args: &Args) -> anyhow::Result<()> {
             &states,
             &SetupOptions {
                 file: args.schema_file.clone(),
-                fscache: Some(PathBuf::from_str("schema_cache").unwrap()),
+                fscache: Some(PathBuf::from_str("cached_schema").unwrap()),
             },
         )?;
 

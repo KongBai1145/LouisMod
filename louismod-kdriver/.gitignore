@@ -1,0 +1,5 @@
+driver/build/bin/
+driver/build/obj/
+driver/build/*.txt
+driver/*.pfx
+driver/*.cer

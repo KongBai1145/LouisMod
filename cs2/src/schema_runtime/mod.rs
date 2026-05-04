@@ -6,13 +6,10 @@ use std::{
 use anyhow::Context;
 use sha1::Digest;
 use utils_state::StateRegistry;
-use vtd_libum::InterfaceError;
+use crate::InterfaceError;
 
 use crate::{
-    schema_runtime::{
-        dump::RuntimeSchemaState,
-        provider::RuntimeSchemaProvider,
-    },
+    schema_runtime::provider::RuntimeSchemaProvider,
     CS2Offset,
     StateBuildInfo,
     StatePredefinedOffset,
@@ -21,6 +18,7 @@ use crate::{
 mod dump;
 mod generator;
 mod provider;
+pub use dump::RuntimeSchemaState;
 
 fn setup_state(registry: &StateRegistry, state: &RuntimeSchemaState) -> anyhow::Result<()> {
     cs2_schema_provider::setup_provider(Box::new(RuntimeSchemaProvider::new(&state.offsets)));

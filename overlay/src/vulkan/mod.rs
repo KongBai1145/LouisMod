@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use ash::vk;
 use frame::FrameData;
 use imgui_rs_vulkan_renderer::{

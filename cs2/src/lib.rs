@@ -32,12 +32,27 @@ pub use class_name_cache::*;
 
 mod pattern;
 pub use pattern::*;
-pub use vtd_libum::{
-    protocol::command::{
-        KeyboardState,
-        MouseState,
-    },
+pub use louismod_kdriver::{
+    KeyboardState,
+    MouseState,
     InterfaceError,
 };
 
 pub mod schema_runtime;
+
+/// Dump the CS2 schema (offsets) from the running game.
+/// If `modules` is provided, only include offsets for those modules.
+pub fn create_dump(
+    registry: &utils_state::StateRegistry,
+    modules: Option<&[&str]>,
+) -> anyhow::Result<schema_runtime::RuntimeSchemaState> {
+    let mut schema = schema_runtime::RuntimeSchemaState::from_game(registry)?;
+
+    if let Some(filter) = modules {
+        schema.offsets.retain(|offset| {
+            filter.iter().any(|f| offset.module.contains(f))
+        });
+    }
+
+    Ok(schema)
+}

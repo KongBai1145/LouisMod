@@ -1,7 +1,33 @@
+# Build artifacts
 **/target/
+**/build/
+*.pdb
+*.exe
+*.sys
+*.dll
+*.o
+*.obj
+*.lib
+*.exp
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Rust
+.cargo/
+
+# Misc
 _*
 !/docs/*
-.vscode
-.idea
 kernel
 docs
+*.tmp
+*.log

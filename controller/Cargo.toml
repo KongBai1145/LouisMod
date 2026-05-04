@@ -19,6 +19,7 @@ serde_with = "3.8.3"
 
 cs2 = { path = "../cs2" }
 cs2-schema-generated = { path = "../cs2-schema/generated" }
+cs2-schema-provider = { path = "../cs2-schema/provider" }
 cs2-schema-cutl = { path = "../cs2-schema/cutl" }
 overlay = { path = "../overlay" }
 utils-state = { path = "../utils/state" }
@@ -39,6 +40,10 @@ rand = "0.8.5"
 libloading = "0.8.6"
 url = "2.5.0"
 tokio = { version = "1.36.0", features = ["full"] }
+axum = { version = "0.7", features = ["ws"] }
+tower-http = { version = "0.5", features = ["fs", "cors"] }
+tower = { version = "0.4", features = ["util"] }
+futures-util = { version = "0.3", default-features = false, features = ["std", "sink"] }
 rfd = "0.14.1"
 
 [build-dependencies]

@@ -1,14 +1,5 @@
-use crate::settings::AppSettings;
-
 pub trait Enhancement {
     fn update(&mut self, ctx: &UpdateContext) -> anyhow::Result<()>;
-    fn update_settings(
-        &mut self,
-        _ui: &imgui::Ui,
-        _settings: &mut AppSettings,
-    ) -> anyhow::Result<bool> {
-        Ok(false)
-    }
 
     fn render(
         &self,
@@ -46,6 +37,9 @@ mod grenade_helper;
 pub use grenade_helper::*;
 
 pub mod sniper_crosshair;
+
+mod silent_aim;
+pub use silent_aim::*;
 
 use utils_state::StateRegistry;
 

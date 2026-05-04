@@ -25,22 +25,17 @@ use utils_state::{
     StateCacheType,
     StateRegistry,
 };
-use vtd_libum::{
-    protocol::{
-        command::{
-            KeyboardState,
-            MouseState,
-            ProcessProtectionMode,
-        },
-        types::{
-            DirectoryTableType,
-            DriverFeature,
-            ProcessId,
-            ProcessModuleInfo,
-        },
-    },
+use louismod_kdriver::{
+    create_driver,
+    DirectoryTableType,
+    DriverFeature,
     DriverInterface,
     InterfaceError,
+    KeyboardState,
+    MouseState,
+    ProcessId,
+    ProcessModuleInfo,
+    ProcessProtectionMode,
 };
 
 use crate::{
@@ -94,19 +89,19 @@ pub struct CS2Handle {
     modules: Vec<ProcessModuleInfo>,
     process_id: ProcessId,
 
-    pub ke_interface: DriverInterface,
+    pub ke_interface: Arc<dyn DriverInterface>,
 }
 
 impl CS2Handle {
     pub fn create(metrics: bool) -> anyhow::Result<Arc<Self>> {
-        let interface = DriverInterface::create_from_env()?;
+        let interface = create_driver()?;
         if metrics {
             let _ = interface.add_metrics_record("application-type", env!("CARGO_CRATE_NAME"));
         }
 
         if interface
             .driver_features()
-            .contains(DriverFeature::ProcessProtectionKernel)
+            .contains(DriverFeature::PROCESS_PROTECTION_KERNEL)
         {
             /*
              * Please no not analyze me:
@@ -210,18 +205,55 @@ impl CS2Handle {
     }
 
     pub fn read_sized<T: Copy>(&self, address: u64) -> anyhow::Result<T> {
-        Ok(self
-            .ke_interface
-            .read(self.process_id, DirectoryTableType::Default, address)?)
+        let size = std::mem::size_of::<T>();
+        if size <= 64 {
+            let mut buf = [0u8; 64];
+            self.ke_interface
+                .read_bytes(self.process_id, DirectoryTableType::Default, address, &mut buf[..size])?;
+            Ok(unsafe { (buf.as_ptr() as *const T).read_unaligned() })
+        } else {
+            let mut buf = vec![0u8; size];
+            self.ke_interface
+                .read_bytes(self.process_id, DirectoryTableType::Default, address, &mut buf)?;
+            Ok(unsafe { (buf.as_ptr() as *const T).read_unaligned() })
+        }
     }
 
     pub fn read_slice<T: Copy>(&self, address: u64, buffer: &mut [T]) -> anyhow::Result<()> {
-        Ok(self.ke_interface.read_slice(
-            self.process_id,
-            DirectoryTableType::Default,
-            address,
-            buffer,
-        )?)
+        let byte_len = buffer.len().checked_mul(std::mem::size_of::<T>()).ok_or_else(|| {
+            anyhow::anyhow!("read_slice size overflow")
+        })?;
+
+        // Stack-allocate small reads to avoid per-read heap allocation
+        const STACK_BUF: usize = 256;
+        if byte_len <= STACK_BUF {
+            let mut bytes = [0u8; STACK_BUF];
+            self.ke_interface
+                .read_bytes(self.process_id, DirectoryTableType::Default, address, &mut bytes[..byte_len])?;
+            unsafe {
+                std::ptr::copy_nonoverlapping(bytes.as_ptr() as *const T, buffer.as_mut_ptr(), buffer.len());
+            }
+        } else {
+            let mut bytes = vec![0u8; byte_len];
+            self.ke_interface
+                .read_bytes(self.process_id, DirectoryTableType::Default, address, &mut bytes)?;
+            unsafe {
+                std::ptr::copy_nonoverlapping(bytes.as_ptr() as *const T, buffer.as_mut_ptr(), buffer.len());
+            }
+        }
+        Ok(())
+    }
+
+    pub fn write_sized<T: Copy>(&self, address: u64, value: &T) -> anyhow::Result<()> {
+        let data = unsafe {
+            std::slice::from_raw_parts(
+                (value as *const T) as *const u8,
+                std::mem::size_of::<T>(),
+            )
+        };
+        self.ke_interface
+            .write_bytes(self.process_id, DirectoryTableType::Default, address, data)?;
+        Ok(())
     }
 
     pub fn read_string(
@@ -229,12 +261,19 @@ impl CS2Handle {
         address: u64,
         expected_length: Option<usize>,
     ) -> anyhow::Result<String> {
-        let mut expected_length = expected_length.unwrap_or(8); // Using 8 as we don't know how far we can read
-        let mut buffer = Vec::new();
+        let initial = expected_length.unwrap_or(64);
+        let mut buffer = vec![0u8; initial];
+        self.read_slice(address, buffer.as_mut_slice())
+            .context("read_string")?;
 
-        // FIXME: Do cstring reading within the kernel driver!
+        if let Ok(str) = CStr::from_bytes_until_nul(&buffer) {
+            return Ok(str.to_str().context("invalid string contents")?.to_string());
+        }
+
+        // Rare: string longer than initial guess, double each retry
+        let mut len = initial * 2;
         loop {
-            buffer.resize(expected_length, 0u8);
+            buffer.resize(len, 0u8);
             self.read_slice(address, buffer.as_mut_slice())
                 .context("read_string")?;
 
@@ -242,7 +281,7 @@ impl CS2Handle {
                 return Ok(str.to_str().context("invalid string contents")?.to_string());
             }
 
-            expected_length += 8;
+            len *= 2;
         }
     }
 
@@ -265,7 +304,7 @@ impl CS2Handle {
 
         let mut buffer = Vec::<u8>::with_capacity(length);
         buffer.resize(length, 0);
-        self.ke_interface.read_slice(
+        self.ke_interface.read_bytes(
             self.process_id,
             DirectoryTableType::Default,
             address,

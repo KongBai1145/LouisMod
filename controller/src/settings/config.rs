@@ -268,6 +268,21 @@ pub struct AppSettings {
     #[serde(default = "default_u32::<1>")]
     pub aim_assist_recoil_min_bullets: u32,
 
+    #[serde(default = "bool_false")]
+    pub aim_silent: bool,
+
+    #[serde(default = "default_f32::<5, 1>")]
+    pub aim_silent_fov: f32,
+
+    #[serde(default = "bool_true")]
+    pub aim_silent_team_check: bool,
+
+    #[serde(default = "bool_false")]
+    pub aim_silent_auto_shoot: bool,
+
+    #[serde(default = "default_key_none")]
+    pub aim_silent_hotkey: Option<HotKey>,
+
     #[serde(default = "bool_true")]
     pub hide_overlay_from_screen_capture: bool,
 

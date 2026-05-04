@@ -61,7 +61,6 @@ use overlay::{
 use settings::{
     load_app_settings,
     AppSettings,
-    SettingsUI,
 };
 use tokio::runtime;
 use utils::show_critical_error;
@@ -76,6 +75,7 @@ use crate::{
         BombInfoIndicator,
         BombLabelIndicator,
         PlayerESP,
+        SilentAim,
         SpectatorsListIndicator,
         TriggerBot,
     },
@@ -92,6 +92,7 @@ mod enhancements;
 mod settings;
 mod utils;
 mod view;
+mod web;
 mod winver;
 
 pub trait MetricsClient {
@@ -147,7 +148,7 @@ impl FontReference {
 
 #[derive(Clone, Default)]
 pub struct AppFonts {
-    valthrun: FontReference,
+    louismod: FontReference,
 }
 
 pub struct Application {
@@ -164,9 +165,12 @@ pub struct Application {
     pub settings_key_warning_visible: RefCell<bool>,
 
     pub settings_dirty: bool,
-    pub settings_ui: RefCell<SettingsUI>,
     pub settings_screen_capture_changed: AtomicBool,
     pub settings_render_debug_window_changed: AtomicBool,
+
+    /// Shared settings for web API access
+    pub shared_settings: Arc<std::sync::RwLock<AppSettings>>,
+    pub web_settings_changed: Arc<AtomicBool>,
 }
 
 impl Application {
@@ -183,6 +187,16 @@ impl Application {
     }
 
     pub fn pre_update(&mut self, controller: &mut SystemRuntimeController) -> anyhow::Result<()> {
+        // Sync settings changed by web API into StateRegistry
+        if self.web_settings_changed.swap(false, Ordering::Acquire) {
+            let web_settings = self.shared_settings.read().unwrap();
+            let mut state_settings = self.settings_mut();
+            *state_settings = web_settings.clone();
+            drop(state_settings);
+            drop(web_settings);
+            self.settings_dirty = true;
+        }
+
         if self.settings_dirty {
             self.settings_dirty = false;
             let mut settings = self.settings_mut();
@@ -191,6 +205,11 @@ impl Application {
             if let Ok(value) = serde_json::to_string(&*settings) {
                 self.cs2.add_metrics_record("settings-updated", &value);
             }
+
+            // Sync to shared settings for web API
+            let mut shared = self.shared_settings.write().unwrap();
+            *shared = settings.clone();
+            drop(shared);
 
             let mut imgui_settings = String::new();
             controller.imgui.save_ini_settings(&mut imgui_settings);
@@ -225,15 +244,6 @@ impl Application {
     }
 
     pub fn update(&mut self, ui: &imgui::Ui) -> anyhow::Result<()> {
-        {
-            for enhancement in self.enhancements.iter() {
-                let mut hack = enhancement.borrow_mut();
-                if hack.update_settings(ui, &mut *self.settings_mut())? {
-                    self.settings_dirty = true;
-                }
-            }
-        }
-
         if ui.is_key_pressed_no_repeat(self.settings().key_settings.0) {
             log::debug!("Toggle settings");
             self.settings_visible = !self.settings_visible;
@@ -298,8 +308,8 @@ impl Application {
         }
 
         if self.settings_visible {
-            let mut settings_ui = self.settings_ui.borrow_mut();
-            settings_ui.render(self, ui, unicode_text)
+            // Settings panel is now served via web UI
+            // The ImGui settings window has been replaced by a web-based control panel
         }
 
         {
@@ -326,7 +336,7 @@ impl Application {
             .position_pivot([0.5, 0.5])
             .build(|| {
                 ui.text("We detected you pressed the \"INSERT\" key.");
-                ui.text("If you meant to open the Valthrun Overlay please use the \"PAUSE\" key.");
+                ui.text("If you meant to open the LouisMod Overlay please use the \"PAUSE\" key.");
                 ui.dummy([0.0, 2.5]);
                 ui.separator();
                 ui.dummy([0.0, 2.5]);
@@ -356,7 +366,7 @@ impl Application {
         if settings.valthrun_watermark {
             {
                 let text_buf;
-                let text = obfstr!(text_buf = "Valthrun Overlay");
+                let text = obfstr!(text_buf = "LouisMod Overlay");
 
                 ui.set_cursor_pos([
                     ui.window_size()[0] - ui.calc_text_size(text)[0] - 10.0,
@@ -422,7 +432,7 @@ fn main() {
 }
 
 #[derive(Debug, Parser)]
-#[clap(name = "Valthrun", version)]
+#[clap(name = "LouisMod", version)]
 struct AppArgs {
     /// Enable verbose logging ($env:RUST_LOG="trace")
     #[clap(short, long)]
@@ -438,7 +448,7 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
     let build_info = version_info()?;
     log::info!(
         "{} v{} ({}). Windows build {}.",
-        obfstr!("Valthrun"),
+        obfstr!("LouisMod"),
         env!("CARGO_PKG_VERSION"),
         env!("GIT_HASH"),
         build_info.dwBuildNumber
@@ -470,11 +480,8 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
     };
 
     {
-        let driver_name = cs2
-            .ke_interface
-            .driver_version()
-            .get_application_name()
-            .unwrap_or("<invalid>");
+        let version = cs2.ke_interface.driver_version();
+        let driver_name = version.get_application_name().unwrap_or("<invalid>");
 
         if driver_name == obfstr!("zenith-driver") {
             let message = [
@@ -485,7 +492,7 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
             ]
             .join("\n");
 
-            let result = dialog::show_yes_no(obfstr!("Valthrun"), &message, false);
+            let result = dialog::show_yes_no(obfstr!("LouisMod"), &message, false);
             if !result {
                 log::info!("{}", obfstr!("Aborting launch due to user input."));
                 return Ok(());
@@ -544,7 +551,7 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
 
             move |atlas| {
                 let font_size = 18.0;
-                let valthrun_font = atlas.add_font(&[FontSource::TtfData {
+                let louismod_font = atlas.add_font(&[FontSource::TtfData {
                     data: include_bytes!("../resources/Valthrun-Regular.ttf"),
                     size_pixels: font_size,
                     config: Some(FontConfig {
@@ -555,7 +562,7 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
                     }),
                 }]);
 
-                app_fonts.valthrun.set_id(valthrun_font);
+                app_fonts.louismod.set_id(louismod_font);
             }
         })),
     };
@@ -590,6 +597,12 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
         }
     }
 
+    let shared_settings = {
+        let settings = app_state.resolve::<AppSettings>(())?;
+        Arc::new(std::sync::RwLock::new(settings.clone()))
+    };
+    let web_settings_changed = Arc::new(AtomicBool::new(false));
+
     let app = Application {
         fonts: app_fonts,
         app_state,
@@ -605,6 +618,7 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
             Rc::new(RefCell::new(TriggerBot::new())),
             Rc::new(RefCell::new(GrenadeHelper::new())),
             Rc::new(RefCell::new(SniperCrosshair::new())),
+            Rc::new(RefCell::new(SilentAim::new())),
         ],
 
         last_total_read_calls: 0,
@@ -614,12 +628,29 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
         settings_key_warning_visible: RefCell::new(false),
 
         settings_dirty: false,
-        settings_ui: RefCell::new(SettingsUI::new()),
         /* set the screen capture visibility at the beginning of the first update */
         settings_screen_capture_changed: AtomicBool::new(true),
         settings_render_debug_window_changed: AtomicBool::new(true),
+
+        shared_settings: shared_settings.clone(),
+        web_settings_changed: web_settings_changed.clone(),
     };
     let app = Rc::new(RefCell::new(app));
+
+    // Start web control panel server
+    {
+        let web_server = web::WebServer::new_with_state(
+            shared_settings.clone(),
+            web_settings_changed.clone(),
+        );
+        let web_port = 16384;
+        tokio::spawn(async move {
+            if let Err(err) = web_server.start(web_port).await {
+                log::error!("Web server failed: {:#}", err);
+            }
+        });
+        log::info!("Web control panel started on http://127.0.0.1:{}", web_port);
+    }
 
     cs2.add_metrics_record(
         obfstr!("controller-status"),
