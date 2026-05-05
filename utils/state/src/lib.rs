@@ -168,12 +168,14 @@ impl StateRegistry {
     }
 
     pub fn invalidate_states(&mut self) {
-        /* As we're mutable there should be no more references to the underlying state */
         let mut allocator = self.allocator.borrow_mut();
 
         let now = Instant::now();
         for state in self.states.iter_mut() {
-            let mut state_ref = state.borrow_mut();
+            let mut state_ref = match state.try_borrow_mut() {
+                Ok(s) => s,
+                Err(_) => continue,
+            };
             let state = if let Some(state) = state_ref.deref_mut() {
                 state
             } else {

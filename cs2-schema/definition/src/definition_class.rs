@@ -60,7 +60,7 @@ impl ClassDefinition {
 
         for class in inheritance.get_inherited_classes(&ClassReference {
             class_name: self.class_name.clone(),
-            module_name: mod_name_from_schema_name(&mod_name).to_string(),
+            module_name: mod_name_from_schema_name(mod_name).to_string(),
         }) {
             output.emit_line(&format!(
                 "impl {}::{} for dyn {class_name} {{ }}",

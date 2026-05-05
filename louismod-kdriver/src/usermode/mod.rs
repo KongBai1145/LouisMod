@@ -74,7 +74,11 @@ impl UserModeDriver {
 
         // Open a handle via indirect NtOpenProcess — bypasses kernel32/ntdll hooks
         let desired_access = PROCESS_VM_READ.0 | PROCESS_QUERY_INFORMATION.0;
-        log::info!("Opening CS2 PID={} with desired_access=0x{:X} (VM_READ|QUERY_INFO)", pid, desired_access);
+        log::info!(
+            "Opening CS2 PID={} with desired_access=0x{:X} (VM_READ|QUERY_INFO)",
+            pid,
+            desired_access
+        );
         let handle_val = syscall::nt_open_process_via_gadget(
             gadget,
             syscalls.nt_open_process,
@@ -169,8 +173,10 @@ impl DriverInterface for UserModeDriver {
         }
         // On Win11 26200+, the kernel rejects NtReadVirtualMemory from outside
         // ntdll for code pages. Fall back to kernel32!ReadProcessMemory.
-        use windows::Win32::System::Diagnostics::Debug::ReadProcessMemory;
-        use windows::Win32::Foundation::HANDLE;
+        use windows::Win32::{
+            Foundation::HANDLE,
+            System::Diagnostics::Debug::ReadProcessMemory,
+        };
         let mut bytes_read: usize = 0;
         unsafe {
             ReadProcessMemory(

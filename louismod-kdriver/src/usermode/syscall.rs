@@ -311,7 +311,13 @@ pub fn nt_open_process_via_gadget(
             &mut cid as *mut ClientId as u64,
         )
     };
-    log::debug!("NtOpenProcess(pid={}, access=0x{:X}) -> 0x{:X}, handle=0x{:X}", pid, desired_access, status as u32, handle);
+    log::debug!(
+        "NtOpenProcess(pid={}, access=0x{:X}) -> 0x{:X}, handle=0x{:X}",
+        pid,
+        desired_access,
+        status as u32,
+        handle
+    );
     if status < 0 {
         return Err(InterfaceError::CommandGenericError {
             message: format!("NtOpenProcess failed on PID {}: 0x{:X}", pid, status as u32),
