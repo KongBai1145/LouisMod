@@ -27,6 +27,9 @@ pub use convar::*;
 mod weapon;
 pub use weapon::*;
 
+pub mod safe_memory;
+pub use safe_memory::*;
+
 mod class_name_cache;
 pub use class_name_cache::*;
 

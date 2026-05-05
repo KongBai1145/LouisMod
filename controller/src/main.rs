@@ -35,6 +35,8 @@ use cs2::{
     StateBuildInfo,
     StateCS2Handle,
     StateCS2Memory,
+    StateSafeMemoryReader,
+    SafeMemoryReader,
 };
 use enhancements::{
     Enhancement,
@@ -537,6 +539,10 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
     let mut app_state = StateRegistry::new(1024 * 8);
     app_state.set(StateCS2Handle::new(cs2.clone()), ())?;
     app_state.set(StateCS2Memory::new(cs2.create_memory_view()), ())?;
+    app_state.set(
+        StateSafeMemoryReader::new(SafeMemoryReader::new(cs2.ke_interface.clone(), cs2.process_id())),
+        (),
+    )?;
     app_state.set(settings, ())?;
 
     {

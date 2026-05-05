@@ -435,6 +435,7 @@ impl<T: 'static + Send + Sync> DerefMut for StateVariable<T> {
 
 pub type StateCS2Handle = StateVariable<Arc<CS2Handle>>;
 pub type StateCS2Memory = StateVariable<Arc<dyn MemoryView + Send + Sync>>;
+pub type StateSafeMemoryReader = StateVariable<crate::safe_memory::SafeMemoryReader>;
 
 impl StateCS2Memory {
     pub fn view_arc(&self) -> Arc<dyn MemoryView> {
