@@ -276,9 +276,10 @@ impl Application {
             *self.settings_key_warning_visible.borrow_mut() = true;
         }
 
-        debug_log("4b: invalidate_states");
-        self.app_state.invalidate_states();
-        debug_log("4c: resolve_mut ViewController");
+        // FIXME(Win11 26200): invalidate_states re-creates states every frame,
+        // triggering raw_struct reads that cause SEH crashes. States use
+        // Persistent cache and don't need per-frame invalidation.
+        // self.app_state.invalidate_states();
         if let Ok(mut view_controller) = self.app_state.resolve_mut::<ViewController>(()) {
             view_controller.update_screen_bounds(mint::Vector2::from_slice(&ui.io().display_size));
         }
