@@ -290,11 +290,12 @@ impl Application {
             input: ui,
         };
 
-        for enhancement in self.enhancements.iter() {
-            debug_log("4d: enhancement borrow_mut");
+        for (i, enhancement) in self.enhancements.iter().enumerate() {
+            debug_log(&format!("4d[{}]: borrow_mut", i));
             let mut enhancement = enhancement.borrow_mut();
-            debug_log("4e: enhancement update");
+            debug_log(&format!("4e[{}]: update start", i));
             enhancement.update(&update_context)?;
+            debug_log(&format!("4f[{}]: update done", i));
         }
 
         let read_calls = self.cs2.ke_interface.total_read_calls();
