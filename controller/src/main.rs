@@ -68,6 +68,17 @@ use utils_state::StateRegistry;
 use view::ViewController;
 use windows::Win32::UI::Shell::IsUserAnAdmin;
 
+fn debug_log(msg: &str) {
+    use std::io::Write;
+    let _ = (|| -> std::io::Result<()> {
+        let mut f = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open("louismod_debug.log")?;
+        writeln!(f, "{}", msg)
+    })();
+}
+
 use crate::{
     enhancements::{
         sniper_crosshair::SniperCrosshair,
@@ -676,14 +687,6 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
             build_info.dwBuildNumber
         ),
     );
-
-    fn debug_log(msg: &str) {
-        use std::io::Write;
-        let _ = (|| -> std::io::Result<()> {
-            let mut f = std::fs::OpenOptions::new().create(true).append(true).open("louismod_debug.log")?;
-            writeln!(f, "{}", msg)
-        })();
-    }
 
     log::info!("{}", obfstr!("App initialized. Spawning overlay."));
     debug_log("1: entering overlay main_loop");
