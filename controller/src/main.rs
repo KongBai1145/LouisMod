@@ -294,26 +294,11 @@ impl Application {
             debug_log(&format!("4d[{}]: borrow_mut", i));
             let mut enhancement = enhancement.borrow_mut();
             debug_log(&format!("4e[{}]: update start", i));
-            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                enhancement.update(&update_context)
-            }));
-            match result {
-                Ok(Ok(())) => {}
-                Ok(Err(e)) => {
-                    log::error!("enhancement[{}] update error: {:#}", i, e);
-                    debug_log(&format!("4err[{}]: {}", i, e));
-                }
-                Err(panic_info) => {
-                    let msg = if let Some(s) = panic_info.downcast_ref::<String>() {
-                        s.clone()
-                    } else if let Some(s) = panic_info.downcast_ref::<&str>() {
-                        s.to_string()
-                    } else {
-                        "unknown panic".to_string()
-                    };
-                    log::error!("enhancement[{}] PANIC: {}", i, msg);
-                    debug_log(&format!("4panic[{}]: {}", i, msg));
-                }
+            // Call update directly - catch_unwind can't catch SEH exceptions on Windows.
+            // PlayerESP handles entity data failures internally via .ok() pattern.
+            if let Err(e) = enhancement.update(&update_context) {
+                log::error!("enhancement[{}] update error: {:#}", i, e);
+                debug_log(&format!("4err[{}]: {}", i, e));
             }
             debug_log(&format!("4f[{}]: update done", i));
         }
@@ -326,6 +311,7 @@ impl Application {
     }
 
     pub fn render(&self, ui: &imgui::Ui, unicode_text: &UnicodeTextRenderer) {
+        debug_log("R1: overlay window start");
         ui.window("overlay")
             .draw_background(false)
             .no_decoration()
@@ -333,6 +319,7 @@ impl Application {
             .size(ui.io().display_size, Condition::Always)
             .position([0.0, 0.0], Condition::Always)
             .build(|| self.render_overlay(ui, unicode_text));
+        debug_log("R2: enhancement debug windows");
 
         {
             for enhancement in self.enhancements.iter() {
@@ -344,9 +331,9 @@ impl Application {
             }
         }
 
+        debug_log("R3: settings visible check");
         if self.settings_visible {
             // Settings panel is now served via web UI
-            // The ImGui settings window has been replaced by a web-based control panel
         }
 
         {
@@ -442,13 +429,8 @@ fn main() {
     // Catch panics and write to log before the console disappears
     std::panic::set_hook(Box::new(|info| {
         let msg = format!("FATAL PANIC: {}", info);
-        // Try to write to stderr and a log file
         eprintln!("{}", msg);
         let _ = std::fs::write("louismod_crash.log", &msg);
-        // Show a message box so the user can see
-        let _ = std::process::Command::new("cmd")
-            .args(["/c", "echo", &msg, "&", "pause"])
-            .spawn();
     }));
 
     let args = match AppArgs::try_parse() {
@@ -734,12 +716,14 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
             }
         },
         move |ui, unicode_text| {
-            debug_log("3: render closure entered");
+            static FRAME: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+            let f = FRAME.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            if f < 5 { debug_log(&format!("F{}: render start", f)); }
             let mut app = match app.try_borrow_mut() {
                 Ok(a) => a,
-                Err(e) => { debug_log(&format!("render borrow failed: {}", e)); return false; }
+                Err(e) => { debug_log(&format!("F{}: borrow fail {}", f, e)); return false; }
             };
-            debug_log("4: calling app.update");
+            if f < 5 { debug_log(&format!("F{}: calling update", f)); }
 
             if let Some((timeout, target)) = &update_timeout {
                 if timeout.elapsed() > *target {
@@ -763,7 +747,9 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
                 }
             }
 
+            if f < 5 { debug_log(&format!("F{}: pre-render", f)); }
             app.render(ui, unicode_text);
+            if f < 5 { debug_log(&format!("F{}: render done", f)); }
             true
         },
     );

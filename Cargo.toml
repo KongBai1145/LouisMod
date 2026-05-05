@@ -35,7 +35,7 @@ codegen-units = 256
 debug = false
 
 [profile.release]
-panic = "unwind"
+panic = "abort"
 lto = true
 
 [workspace.dependencies]

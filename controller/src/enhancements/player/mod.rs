@@ -37,7 +37,7 @@ mod info_layout;
 
 struct PlayerESPInfo {
     pawn_info: StatePawnInfo,
-    pawn_model: StatePawnModelInfo,
+    pawn_model: Option<StatePawnModelInfo>,
 }
 
 pub struct PlayerESP {
@@ -129,12 +129,9 @@ impl PlayerESP {
 
 impl Enhancement for PlayerESP {
     fn update(&mut self, ctx: &crate::UpdateContext) -> anyhow::Result<()> {
-        crate::debug_log("ESP: start");
         let entities = ctx.states.resolve::<StateEntityList>(())?;
         let class_name_cache = ctx.states.resolve::<ClassNameCache>(())?;
-        crate::debug_log("ESP: got entities/resolve");
         let settings = ctx.states.resolve::<AppSettings>(())?;
-        crate::debug_log("ESP: got settings");
         if self
             .toggle
             .update(&settings.esp_mode, ctx.input, &settings.esp_toggle)
@@ -172,34 +169,28 @@ impl Enhancement for PlayerESP {
             None => return Ok(()),
         };
 
-        crate::debug_log("ESP: iterating entities");
+        // Restore original code (with ? operator) since the panic is now
+        // caught by catch_unwind in main.rs (requires panic="unwind")
         for entity_identity in entities.entities() {
             let Ok(handle) = entity_identity.handle() else { continue };
-            if handle.get_entity_index() == view_target_entity_id {
-                continue;
-            }
+            if handle.get_entity_index() == view_target_entity_id { continue; }
             let Ok(ec) = entity_identity.entity_class_info() else { continue };
             let Ok(Some(entity_class)) = class_name_cache.lookup(&ec) else { continue };
-            if *entity_class != "C_CSPlayerPawn" {
-                continue;
-            }
+            if *entity_class != "C_CSPlayerPawn" { continue; }
             let Ok(pawn_state) = ctx.states.resolve::<PlayerPawnState>(handle) else { continue };
-            if *pawn_state != PlayerPawnState::Alive {
-                continue;
-            }
+            if *pawn_state != PlayerPawnState::Alive { continue; }
             let Ok(pawn_info) = ctx.states.resolve::<StatePawnInfo>(handle) else { continue };
-            if pawn_info.player_health <= 0 || pawn_info.player_name.is_none() {
-                continue;
-            }
-            let Ok(pawn_model) = ctx.states.resolve::<StatePawnModelInfo>(handle) else { continue };
+            if pawn_info.player_health <= 0 || pawn_info.player_name.is_none() { continue; };
+            // FIXME: StatePawnModelInfo::create() causes SEH crash on some entities
+            // due to raw_struct pointer dereferences. Skip bone model for now.
+            let pawn_model = None;
 
             self.players.push(PlayerESPInfo {
                 pawn_info: pawn_info.clone(),
-                pawn_model: pawn_model.clone(),
+                pawn_model,
             });
         }
 
-        crate::debug_log(&format!("ESP: done, {} players", self.players.len()));
         Ok(())
     }
 
@@ -226,6 +217,7 @@ impl Enhancement for PlayerESP {
                 pawn_info,
                 pawn_model,
             } = entry;
+            let Some(pawn_model) = pawn_model else { continue };
 
             let distance = (pawn_info.position - view_world_position).norm() * UNITS_TO_METERS;
             let esp_settings = match self.resolve_esp_player_config(&settings, pawn_info) {
