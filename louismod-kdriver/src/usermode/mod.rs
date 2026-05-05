@@ -163,10 +163,12 @@ impl DriverInterface for UserModeDriver {
         buf: &mut [u8],
     ) -> IResult<()> {
         self.read_calls.fetch_add(1, Ordering::Relaxed);
-        // ReadProcessMemory is used because on Windows 11 26200+ the kernel
-        // rejects NtReadVirtualMemory when the syscall instruction originates
-        // from outside ntdll.dll. ReadProcessMemory calls NtReadVirtualMemory
-        // from within kernel32/ntdll, so the kernel sees ntdll as the caller.
+        // Try the fast indirect syscall first
+        if read_mem(&self.syscalls, self.gadget, self.process_handle, addr, buf).is_ok() {
+            return Ok(());
+        }
+        // On Win11 26200+, the kernel rejects NtReadVirtualMemory from outside
+        // ntdll for code pages. Fall back to kernel32!ReadProcessMemory.
         use windows::Win32::System::Diagnostics::Debug::ReadProcessMemory;
         use windows::Win32::Foundation::HANDLE;
         let mut bytes_read: usize = 0;
