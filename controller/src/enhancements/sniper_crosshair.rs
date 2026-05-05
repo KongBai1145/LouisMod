@@ -1,6 +1,5 @@
 use anyhow::Context;
 use cs2::{
-    CEntityIdentityEx,
     LocalCameraControllerTarget,
     StateCS2Memory,
     StateEntityList,

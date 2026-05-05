@@ -17,13 +17,13 @@ use utils_state::{
 };
 
 use super::{
-    CEntityIdentityEx,
     StateEntityList,
 };
 use crate::{
     CS2Offset,
     StateCS2Memory,
     StateResolvedOffset,
+    StateSafeMemoryReader,
 };
 
 pub struct StateLocalPlayerController {
@@ -54,23 +54,22 @@ impl State for StatePlayerControllerClass {
     type Parameter = ();
 
     fn create(states: &StateRegistry, _param: Self::Parameter) -> anyhow::Result<Self> {
-        let memory = states.resolve::<StateCS2Memory>(())?;
-
+        let smr = states.resolve::<StateSafeMemoryReader>(())?;
         let local_controller = states.resolve::<StateLocalPlayerController>(())?;
-        let Some(controller) = local_controller.instance.value_reference(memory.view_arc()) else {
-            anyhow::bail!("missing local player controller")
-        };
 
-        let controller_class = controller
-            .m_pEntity()?
-            .value_reference(memory.view_arc())
-            .context("m_pEntity nullptr")?
-            .entity_class_info()?
-            .address;
+        // Read controller address from Ptr64 (it's stored at the resolved offset)
+        let offset = states.resolve::<StateResolvedOffset>(CS2Offset::LocalController)?;
+        let controller_addr = smr.read_ptr(offset.address)?;
+        if controller_addr == 0 { anyhow::bail!("null controller"); }
 
-        Ok(Self {
-            address: controller_class,
-        })
+        // CEntityInstance::m_pEntity is at offset 0x00 -> entity identity ptr
+        let identity_addr = smr.read_ptr(controller_addr)?;
+        if identity_addr == 0 { anyhow::bail!("null entity identity"); }
+
+        // CEntityIdentity::m_pEntityClassInfo is at offset 0x08
+        let class_info_addr = smr.read_ptr(identity_addr + 0x08)?;
+
+        Ok(Self { address: class_info_addr })
     }
 
     fn cache_type() -> StateCacheType {

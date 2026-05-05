@@ -13,7 +13,6 @@ use utils_state::{
 };
 
 use crate::{
-    CEntityIdentityEx,
     ClassNameCache,
     StateCS2Memory,
     StateEntityList,

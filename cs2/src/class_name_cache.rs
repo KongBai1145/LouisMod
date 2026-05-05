@@ -19,7 +19,6 @@ use utils_state::{
 };
 
 use crate::{
-    CEntityIdentityEx,
     CS2Handle,
     StateCS2Handle,
     StateEntityList,

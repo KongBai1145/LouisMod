@@ -123,6 +123,12 @@ impl SafeEntityIdentity {
     pub fn is_valid(&self) -> bool {
         self.entity_ptr != 0 && self.class_info_ptr != 0
     }
+    /// Get entity address for raw memory reads (compat)
+    pub fn entity_ptr_raw(&self) -> u64 { self.entity_ptr }
+    /// Get class info address (compat)
+    pub fn class_info_ptr_raw(&self) -> u64 { self.class_info_ptr }
+    /// Get entity handle raw value (compat)
+    pub fn handle_raw_value(&self) -> u64 { self.handle_raw }
 }
 
 #[derive(Clone, Debug)]

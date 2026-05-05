@@ -2,7 +2,6 @@ use anyhow::Context;
 use cs2::{
     state::PlantedC4,
     BombCarrierInfo,
-    CEntityIdentityEx,
     ClassNameCache,
     PlantedC4State,
     StateCS2Memory,

@@ -65,12 +65,19 @@ impl StateEntityList {
         self.handle_lookup.get(&entity_index).and_then(|i| self.entities.get(*i))
     }
 
-    pub fn entity_from_handle<T: ?Sized>(
-        &self,
-        handle: &EntityHandle<T>,
-    ) -> Option<u64> {
+    /// Get the raw entity address for a handle (for use with SafeMemoryReader)
+    pub fn entity_addr(&self, handle: &EntityHandle<impl ?Sized>) -> Option<u64> {
         let idx = handle.get_entity_index();
         self.identity_from_index(idx).map(|e| e.entity_ptr)
+    }
+
+    /// Compat: returns Ptr64<T> from entity handle (used by old value_copy/reference callers)
+    /// SAFETY: Ptr64<T> wraps a raw pointer. Only use for read-only operations.
+    pub fn entity_from_handle<T: ?Sized>(&self, handle: &EntityHandle<T>) -> Option<raw_struct::builtins::Ptr64<T>> {
+        let idx = handle.get_entity_index();
+        self.identity_from_index(idx).map(|e| {
+            unsafe { std::mem::transmute::<u64, raw_struct::builtins::Ptr64<T>>(e.entity_ptr) }
+        })
     }
 
     pub fn entities_of_class(

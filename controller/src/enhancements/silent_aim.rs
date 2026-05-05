@@ -1,6 +1,5 @@
 use anyhow::Context;
 use cs2::{
-    CEntityIdentityEx,
     ClassNameCache,
     MouseState,
     StateCS2Memory,

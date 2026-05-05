@@ -1,56 +1,29 @@
-use anyhow::anyhow;
+/// Legacy adapter: provides old method names on SafeEntityIdentity
+/// without doing any raw_struct operations.
 use cs2_schema_cutl::EntityHandle;
-use cs2_schema_generated::cs2::client::{
-    CEntityIdentity,
-    CEntityInstance,
-};
-use raw_struct::{
-    builtins::Ptr64,
-    raw_struct,
-    FromMemoryView,
-    Viewable,
-};
+use raw_struct::builtins::Ptr64;
+use crate::safe_memory::SafeEntityIdentity;
 
-pub trait CEntityIdentityEx {
-    fn entity_ptr<T: ?Sized>(&self) -> anyhow::Result<Ptr64<T>>;
-    fn entity_class_info(&self) -> anyhow::Result<Ptr64<()>>;
-
-    fn handle<T: ?Sized>(&self) -> anyhow::Result<EntityHandle<T>>;
-}
-
-impl CEntityIdentityEx for dyn CEntityIdentity {
-    fn entity_ptr<T: ?Sized>(&self) -> anyhow::Result<Ptr64<T>> {
-        Ptr64::read_object(self.object_memory(), 0x00).map_err(|e| anyhow!(e))
+impl SafeEntityIdentity {
+    /// Returns Ptr64<T> from entity address. No dereference.
+    pub fn entity_ptr<T: ?Sized>(&self) -> anyhow::Result<Ptr64<T>> {
+        if self.entity_ptr == 0 { anyhow::bail!("null entity ptr"); }
+        Ok(unsafe { std::mem::transmute::<u64, Ptr64<T>>(self.entity_ptr) })
     }
 
-    fn entity_class_info(&self) -> anyhow::Result<Ptr64<()>> {
-        Ptr64::read_object(self.object_memory(), 0x08).map_err(|e| anyhow!(e))
+    /// Returns Ptr64 wrapping class info address. No dereference.
+    pub fn entity_class_info(&self) -> anyhow::Result<Ptr64<()>> {
+        if self.class_info_ptr == 0 { anyhow::bail!("null class info"); }
+        Ok(unsafe { std::mem::transmute::<u64, Ptr64<()>>(self.class_info_ptr) })
     }
 
-    fn handle<T: ?Sized>(&self) -> anyhow::Result<EntityHandle<T>> {
-        EntityHandle::read_object(self.object_memory(), 0x10).map_err(|e| anyhow!(e))
+    /// Returns EntityHandle from the raw packed handle value.
+    pub fn handle<T: ?Sized>(&self) -> anyhow::Result<EntityHandle<T>> {
+        // EntityHandle is a u32 packed value. Transmute the handle_raw (u64) low 32 bits.
+        let packed = (self.handle_raw & 0xFFFF_FFFF) as u32;
+        Ok(unsafe { std::mem::transmute::<u32, EntityHandle<T>>(packed) })
     }
 }
 
-pub trait CEntityInstanceEx {
-    fn vtable(&self) -> anyhow::Result<Ptr64<()>>;
-}
-
-impl CEntityInstanceEx for dyn CEntityInstance {
-    fn vtable(&self) -> anyhow::Result<Ptr64<()>> {
-        Ptr64::read_object(self.object_memory(), 0x00).map_err(|e| anyhow!(e))
-    }
-}
-
-#[raw_struct(size = "<dyn CEntityIdentity as Viewable<_>>::MEMORY_SIZE")]
-pub struct TypedEntityIdentity<T>
-where
-    T: ?Sized + Send + Sync + 'static, {}
-
-impl<T: ?Sized> CEntityIdentity for dyn TypedEntityIdentity<T> {}
-
-impl<T: ?Sized> dyn TypedEntityIdentity<T> {
-    pub fn entity(&self) -> anyhow::Result<Ptr64<T>> {
-        Ptr64::read_object(self.object_memory(), 0x00).map_err(|e| anyhow!(e))
-    }
-}
+pub fn handle_index(raw: u64) -> u32 { (raw & 0x7FFF) as u32 }
+pub fn handle_serial(raw: u64) -> u32 { ((raw >> 15) & 0x1FFFF) as u32 }

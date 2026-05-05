@@ -1,6 +1,5 @@
 use cs2::{
     BoneFlags,
-    CEntityIdentityEx,
     CS2Model,
     ClassNameCache,
     LocalCameraControllerTarget,

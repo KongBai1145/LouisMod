@@ -5,7 +5,6 @@ use std::{
 
 use anyhow::Context;
 use cs2::{
-    CEntityIdentityEx,
     ClassNameCache,
     LocalCameraControllerTarget,
     StateCS2Memory,

@@ -19,7 +19,6 @@ use utils_state::{
 
 use super::StateGlobals;
 use crate::{
-    CEntityIdentityEx,
     ClassNameCache,
     StateCS2Memory,
     StateEntityList,
