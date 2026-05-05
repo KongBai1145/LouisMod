@@ -650,12 +650,12 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
         enhancements: vec![
             Rc::new(RefCell::new(AntiAimPunsh::new(cvar_sensitivity))),
             Rc::new(RefCell::new(PlayerESP::new())),
-            Rc::new(RefCell::new(SpectatorsListIndicator::new())),
+            // Rc::new(RefCell::new(SpectatorsListIndicator::new())),
             Rc::new(RefCell::new(BombInfoIndicator::new())),
             Rc::new(RefCell::new(BombLabelIndicator::new())),
             Rc::new(RefCell::new(TriggerBot::new())),
-            Rc::new(RefCell::new(GrenadeHelper::new())),
-            Rc::new(RefCell::new(SniperCrosshair::new())),
+            // Rc::new(RefCell::new(GrenadeHelper::new())),
+            // Rc::new(RefCell::new(SniperCrosshair::new())),
             Rc::new(RefCell::new(SilentAim::new())),
         ],
 
