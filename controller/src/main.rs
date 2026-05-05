@@ -672,8 +672,16 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
         ),
     );
 
+    fn debug_log(msg: &str) {
+        use std::io::Write;
+        let _ = (|| -> std::io::Result<()> {
+            let mut f = std::fs::OpenOptions::new().create(true).append(true).open("louismod_debug.log")?;
+            writeln!(f, "{}", msg)
+        })();
+    }
+
     log::info!("{}", obfstr!("App initialized. Spawning overlay."));
-    let _ = std::fs::write("louismod_debug.log", "Entering overlay main_loop\n");
+    debug_log("1: entering overlay main_loop");
     log::info!("DEBUG: entering overlay main_loop");
     let mut update_fail_count = 0;
     let mut update_timeout: Option<(Instant, Duration)> = None;
@@ -682,16 +690,13 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
             let app = app.clone();
             let mut first = true;
             move |controller| {
-                if first { let _ = std::fs::write("louismod_debug.log", "In pre_update closure (first frame)\n"); first = false; }
+                if first { debug_log("2: pre_update closure (first frame)"); first = false; }
                 let mut app = match app.try_borrow_mut() {
                     Ok(a) => a,
-                    Err(e) => {
-                        let _ = std::fs::write("louismod_debug.log", format!("pre_update borrow failed: {}\n", e));
-                        return false;
-                    }
+                    Err(e) => { debug_log(&format!("pre_update borrow failed: {}", e)); return false; }
                 };
                 if let Err(err) = app.pre_update(controller) {
-                    let _ = std::fs::write("louismod_debug.log", format!("pre_update error: {}\n", err));
+                    debug_log(&format!("pre_update error: {}", err));
                     show_critical_error(&format!("{:#}", err));
                     false
                 } else {
@@ -700,13 +705,12 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
             }
         },
         move |ui, unicode_text| {
+            debug_log("3: render closure entered");
             let mut app = match app.try_borrow_mut() {
                 Ok(a) => a,
-                Err(e) => {
-                    let _ = std::fs::write("louismod_debug.log", format!("render borrow failed: {}\n", e));
-                    return false;
-                }
+                Err(e) => { debug_log(&format!("render borrow failed: {}", e)); return false; }
             };
+            debug_log("4: calling app.update");
 
             if let Some((timeout, target)) = &update_timeout {
                 if timeout.elapsed() > *target {
