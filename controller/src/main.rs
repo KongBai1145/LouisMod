@@ -402,6 +402,18 @@ impl Application {
 }
 
 fn main() {
+    // Catch panics and write to log before the console disappears
+    std::panic::set_hook(Box::new(|info| {
+        let msg = format!("FATAL PANIC: {}", info);
+        // Try to write to stderr and a log file
+        eprintln!("{}", msg);
+        let _ = std::fs::write("louismod_crash.log", &msg);
+        // Show a message box so the user can see
+        let _ = std::process::Command::new("cmd")
+            .args(["/c", "echo", &msg, "&", "pause"])
+            .spawn();
+    }));
+
     let args = match AppArgs::try_parse() {
         Ok(args) => args,
         Err(error) => {
