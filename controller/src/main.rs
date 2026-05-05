@@ -244,6 +244,7 @@ impl Application {
     }
 
     pub fn update(&mut self, ui: &imgui::Ui) -> anyhow::Result<()> {
+        debug_log("4a: update start");
         if ui.is_key_pressed_no_repeat(self.settings().key_settings.0) {
             log::debug!("Toggle settings");
             self.settings_visible = !self.settings_visible;
@@ -264,7 +265,9 @@ impl Application {
             *self.settings_key_warning_visible.borrow_mut() = true;
         }
 
+        debug_log("4b: invalidate_states");
         self.app_state.invalidate_states();
+        debug_log("4c: resolve_mut ViewController");
         if let Ok(mut view_controller) = self.app_state.resolve_mut::<ViewController>(()) {
             view_controller.update_screen_bounds(mint::Vector2::from_slice(&ui.io().display_size));
         }
@@ -277,7 +280,9 @@ impl Application {
         };
 
         for enhancement in self.enhancements.iter() {
+            debug_log("4d: enhancement borrow_mut");
             let mut enhancement = enhancement.borrow_mut();
+            debug_log("4e: enhancement update");
             enhancement.update(&update_context)?;
         }
 
