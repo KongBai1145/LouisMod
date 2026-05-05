@@ -673,14 +673,25 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
     );
 
     log::info!("{}", obfstr!("App initialized. Spawning overlay."));
+    let _ = std::fs::write("louismod_debug.log", "Entering overlay main_loop\n");
+    log::info!("DEBUG: entering overlay main_loop");
     let mut update_fail_count = 0;
     let mut update_timeout: Option<(Instant, Duration)> = None;
     overlay.main_loop(
         {
             let app = app.clone();
+            let mut first = true;
             move |controller| {
-                let mut app = app.borrow_mut();
+                if first { let _ = std::fs::write("louismod_debug.log", "In pre_update closure (first frame)\n"); first = false; }
+                let mut app = match app.try_borrow_mut() {
+                    Ok(a) => a,
+                    Err(e) => {
+                        let _ = std::fs::write("louismod_debug.log", format!("pre_update borrow failed: {}\n", e));
+                        return false;
+                    }
+                };
                 if let Err(err) = app.pre_update(controller) {
+                    let _ = std::fs::write("louismod_debug.log", format!("pre_update error: {}\n", err));
                     show_critical_error(&format!("{:#}", err));
                     false
                 } else {
@@ -689,7 +700,13 @@ fn real_main(args: &AppArgs) -> anyhow::Result<()> {
             }
         },
         move |ui, unicode_text| {
-            let mut app = app.borrow_mut();
+            let mut app = match app.try_borrow_mut() {
+                Ok(a) => a,
+                Err(e) => {
+                    let _ = std::fs::write("louismod_debug.log", format!("render borrow failed: {}\n", e));
+                    return false;
+                }
+            };
 
             if let Some((timeout, target)) = &update_timeout {
                 if timeout.elapsed() > *target {
