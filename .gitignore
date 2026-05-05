@@ -30,4 +30,4 @@ _*
 kernel
 docs
 *.tmp
-*.log
+*.logcached_schema/
