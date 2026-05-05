@@ -68,7 +68,7 @@ use utils_state::StateRegistry;
 use view::ViewController;
 use windows::Win32::UI::Shell::IsUserAnAdmin;
 
-fn debug_log(msg: &str) {
+pub fn debug_log(msg: &str) {
     use std::io::Write;
     let _ = (|| -> std::io::Result<()> {
         let mut f = std::fs::OpenOptions::new()
@@ -294,7 +294,27 @@ impl Application {
             debug_log(&format!("4d[{}]: borrow_mut", i));
             let mut enhancement = enhancement.borrow_mut();
             debug_log(&format!("4e[{}]: update start", i));
-            enhancement.update(&update_context)?;
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                enhancement.update(&update_context)
+            }));
+            match result {
+                Ok(Ok(())) => {}
+                Ok(Err(e)) => {
+                    log::error!("enhancement[{}] update error: {:#}", i, e);
+                    debug_log(&format!("4err[{}]: {}", i, e));
+                }
+                Err(panic_info) => {
+                    let msg = if let Some(s) = panic_info.downcast_ref::<String>() {
+                        s.clone()
+                    } else if let Some(s) = panic_info.downcast_ref::<&str>() {
+                        s.to_string()
+                    } else {
+                        "unknown panic".to_string()
+                    };
+                    log::error!("enhancement[{}] PANIC: {}", i, msg);
+                    debug_log(&format!("4panic[{}]: {}", i, msg));
+                }
+            }
             debug_log(&format!("4f[{}]: update done", i));
         }
 

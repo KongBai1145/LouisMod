@@ -129,9 +129,12 @@ impl PlayerESP {
 
 impl Enhancement for PlayerESP {
     fn update(&mut self, ctx: &crate::UpdateContext) -> anyhow::Result<()> {
+        crate::debug_log("ESP: start");
         let entities = ctx.states.resolve::<StateEntityList>(())?;
         let class_name_cache = ctx.states.resolve::<ClassNameCache>(())?;
+        crate::debug_log("ESP: got entities/resolve");
         let settings = ctx.states.resolve::<AppSettings>(())?;
+        crate::debug_log("ESP: got settings");
         if self
             .toggle
             .update(&settings.esp_mode, ctx.input, &settings.esp_toggle)
@@ -169,38 +172,26 @@ impl Enhancement for PlayerESP {
             None => return Ok(()),
         };
 
+        crate::debug_log("ESP: iterating entities");
         for entity_identity in entities.entities() {
-            if entity_identity.handle::<()>()?.get_entity_index() == view_target_entity_id {
+            let Ok(handle) = entity_identity.handle() else { continue };
+            if handle.get_entity_index() == view_target_entity_id {
                 continue;
             }
-
-            let entity_class = class_name_cache.lookup(&entity_identity.entity_class_info()?)?;
-            if !entity_class
-                .map(|name| *name == "C_CSPlayerPawn")
-                .unwrap_or(false)
-            {
-                /* entity is not a player pawn */
+            let Ok(ec) = entity_identity.entity_class_info() else { continue };
+            let Ok(Some(entity_class)) = class_name_cache.lookup(&ec) else { continue };
+            if *entity_class != "C_CSPlayerPawn" {
                 continue;
             }
-
-            let pawn_state = ctx
-                .states
-                .resolve::<PlayerPawnState>(entity_identity.handle()?)?;
+            let Ok(pawn_state) = ctx.states.resolve::<PlayerPawnState>(handle) else { continue };
             if *pawn_state != PlayerPawnState::Alive {
                 continue;
             }
-
-            let pawn_info = ctx
-                .states
-                .resolve::<StatePawnInfo>(entity_identity.handle()?)?;
-
+            let Ok(pawn_info) = ctx.states.resolve::<StatePawnInfo>(handle) else { continue };
             if pawn_info.player_health <= 0 || pawn_info.player_name.is_none() {
                 continue;
             }
-
-            let pawn_model = ctx
-                .states
-                .resolve::<StatePawnModelInfo>(entity_identity.handle()?)?;
+            let Ok(pawn_model) = ctx.states.resolve::<StatePawnModelInfo>(handle) else { continue };
 
             self.players.push(PlayerESPInfo {
                 pawn_info: pawn_info.clone(),
@@ -208,6 +199,7 @@ impl Enhancement for PlayerESP {
             });
         }
 
+        crate::debug_log(&format!("ESP: done, {} players", self.players.len()));
         Ok(())
     }
 
