@@ -31,3 +31,5 @@ kernel
 docs
 *.tmp
 *.logcached_schema/
+louismod_crash.log
+louismod_debug.log
