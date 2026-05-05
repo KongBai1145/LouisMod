@@ -301,6 +301,12 @@ pub struct AppSettings {
     #[serde(default = "bool_true")]
     pub sniper_crosshair: bool,
 
+    #[serde(default = "default_color::<0, 255, 0, 255>")]
+    pub sniper_crosshair_color: Color,
+
+    #[serde(default = "default_f32::<2, 1>")]
+    pub sniper_crosshair_size: f32,
+
     #[serde(flatten, with = "serde_prefix_grenade_helper")]
     pub grenade_helper: GrenadeSettings,
 
