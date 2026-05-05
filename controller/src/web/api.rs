@@ -10,6 +10,7 @@ use serde_json::Value;
 use super::server::WebAppState;
 use crate::settings::{
     AppSettings,
+    EspConfig,
     EspSelector,
 };
 
@@ -114,8 +115,25 @@ pub async fn update_esp_config(
 ) -> Json<Value> {
     let mut settings = state.settings.write().unwrap();
 
+    // Auto-create new config entries if they don't exist yet
+    if !settings.esp_settings.contains_key(&key) {
+        if let Ok(new_config) = serde_json::from_value::<EspConfig>(updates.clone()) {
+            settings.esp_settings.insert(key.clone(), new_config);
+        } else {
+            // Create a default Player config as fallback
+            let default_config = if key.starts_with("chicken") {
+                EspConfig::Chicken(Default::default())
+            } else if key.starts_with("weapon") {
+                EspConfig::Weapon(Default::default())
+            } else {
+                EspConfig::Player(Default::default())
+            };
+            settings.esp_settings.insert(key.clone(), default_config);
+        }
+    }
+
     if let Some(config) = settings.esp_settings.get_mut(&key) {
-        if let Ok(updated) = serde_json::from_value(updates.clone()) {
+        if let Ok(updated) = serde_json::from_value::<EspConfig>(updates.clone()) {
             *config = updated;
         }
 
