@@ -105,40 +105,6 @@ impl UserModeDriver {
             modules.len()
         );
 
-        // Test: compare indirect syscall vs real kernel32!ReadProcessMemory
-        if let Some(engine2) = modules.iter().find(|m| m.get_base_dll_name() == Some("engine2.dll")) {
-            use windows::Win32::System::Diagnostics::Debug::ReadProcessMemory;
-            use windows::Win32::Foundation::HANDLE;
-            // Test via real ReadProcessMemory
-            let mut rpm_buf = [0u8; 64];
-            let mut rpm_read: usize = 0;
-            let h = HANDLE(handle_val as isize);
-            unsafe {
-                let ok = ReadProcessMemory(h, engine2.base_address as *const _, rpm_buf.as_mut_ptr() as *mut _, 64, Some(&mut rpm_read));
-                if ok.is_ok() {
-                    log::info!("  RPM(engine2+0, 64B) OK: {:02X?}", &rpm_buf[..16]);
-                } else {
-                    log::error!("  RPM(engine2+0, 64B) FAILED: {}", std::io::Error::last_os_error());
-                }
-                // Try 64KB via RPM
-                let mut rpm_large = vec![0u8; 65536];
-                let mut rpm_large_read: usize = 0;
-                let ok2 = ReadProcessMemory(h, engine2.base_address as *const _, rpm_large.as_mut_ptr() as *mut _, 65536, Some(&mut rpm_large_read));
-                if ok2.is_ok() {
-                    log::info!("  RPM(engine2+0, 64KB) OK: {:02X?}", &rpm_large[..16]);
-                } else {
-                    log::error!("  RPM(engine2+0, 64KB) FAILED: {}", std::io::Error::last_os_error());
-                }
-                // Try 64KB at engine2+0x10000
-                let ok3 = ReadProcessMemory(h, (engine2.base_address + 0x10000) as *const _, rpm_large.as_mut_ptr() as *mut _, 65536, Some(&mut rpm_large_read));
-                if ok3.is_ok() {
-                    log::info!("  RPM(engine2+0x10000, 64KB) OK: {:02X?}", &rpm_large[..16]);
-                } else {
-                    log::error!("  RPM(engine2+0x10000, 64KB) FAILED: {}", std::io::Error::last_os_error());
-                }
-            }
-        }
-
         for m in &modules {
             log::trace!(
                 "  {:X} {} (size {})",
@@ -197,13 +163,10 @@ impl DriverInterface for UserModeDriver {
         buf: &mut [u8],
     ) -> IResult<()> {
         self.read_calls.fetch_add(1, Ordering::Relaxed);
-        // Try indirect syscall first
-        if read_mem(&self.syscalls, self.gadget, self.process_handle, addr, buf).is_ok() {
-            return Ok(());
-        }
-        // On Windows 11 26200+ code pages may be unreadable via direct syscall
-        // from outside ntdll. Fall back to kernel32!ReadProcessMemory which
-        // internally calls NtReadVirtualMemory with the correct return address.
+        // ReadProcessMemory is used because on Windows 11 26200+ the kernel
+        // rejects NtReadVirtualMemory when the syscall instruction originates
+        // from outside ntdll.dll. ReadProcessMemory calls NtReadVirtualMemory
+        // from within kernel32/ntdll, so the kernel sees ntdll as the caller.
         use windows::Win32::System::Diagnostics::Debug::ReadProcessMemory;
         use windows::Win32::Foundation::HANDLE;
         let mut bytes_read: usize = 0;
